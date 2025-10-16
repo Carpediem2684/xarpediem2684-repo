@@ -4,8 +4,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-st.set_page_config(page_title='Dashboard', layout='wide')
-st.title('Dashboard')
+st.set_page_config(page_title='Dashboard PIC', layout='centered')
+st.title('📊 Dashboard PIC - Mobile Friendly')
 
 # Lecture du fichier Excel
 df = pd.read_excel("Essai appli dashboard.xlsx", sheet_name="2025", engine="openpyxl", header=None)
@@ -33,26 +33,26 @@ couleurs_personnalisees = {
 }
 
 # Sélection du mois
-mois_selectionne = st.selectbox("Choisir un mois :", mois)
+mois_selectionne = st.selectbox("📅 Choisir un mois :", mois)
 pic_mois_realise = pic_realise.loc[mois_selectionne]
 pic_mois_prevu = pic_prevu.loc[mois_selectionne]
 campagne_mois = campagne_data.loc[mois_selectionne]
 
-# Onglets
-tabs = st.tabs(["KPI & Évolution", "Répartition", "Heatmap", "Ruptures", "Adhérence"])
+# Onglets simplifiés
+tabs = st.tabs(["📈 KPI & Évolution", "📊 Répartition", "🗺️ Heatmap", "🚨 Ruptures", "✅ Adhérence"])
 
 with tabs[0]:
-    col1, col2 = st.columns(2)
-    col1.metric("PIC Réalisé", f"{pic_mois_realise} m²")
-    col2.metric("PIC Prévu", f"{pic_mois_prevu} m²")
+    st.markdown("### ✅ Indicateurs clés")
+    st.metric("PIC Réalisé", f"{pic_mois_realise} m²")
+    st.metric("PIC Prévu", f"{pic_mois_prevu} m²")
 
-    st.subheader("Évolution mensuelle du PIC")
+    st.markdown("### 📈 Évolution mensuelle du PIC")
     df_evol = pd.DataFrame({"Mois": mois, "PIC Réalisé": pic_realise.values, "PIC Prévu": pic_prevu.values})
     fig_line = px.line(df_evol, x="Mois", y=["PIC Réalisé", "PIC Prévu"], markers=True)
     st.plotly_chart(fig_line, use_container_width=True)
 
 with tabs[1]:
-    st.subheader("Répartition des km² réalisés par campagne")
+    st.markdown("### 📊 Répartition des m² réalisés par campagne")
     fig_pie = px.pie(
         values=campagne_mois.values,
         names=campagne_mois.index,
@@ -64,16 +64,16 @@ with tabs[1]:
     st.plotly_chart(fig_pie, use_container_width=True)
 
 with tabs[2]:
-    st.subheader("Heatmap des m² réalisés par campagne et mois")
+    st.markdown("### 🗺️ Heatmap des km² réalisés par campagne et mois")
     fig_heatmap = px.imshow(campagne_data.T, text_auto=True, aspect="auto", color_continuous_scale="Blues")
     st.plotly_chart(fig_heatmap, use_container_width=True)
 
 with tabs[3]:
-    st.subheader("Ruptures client")
+    st.markdown("### 🚨 Ruptures client")
     st.write(f"Nombre de ruptures : {ruptures}")
 
 with tabs[4]:
-    st.subheader("Taux d'adhérence S-1")
+    st.markdown("### ✅ Taux d'adhérence S-1")
     fig_gauge = go.Figure(go.Indicator(
         mode="gauge+number",
         value=taux_adherence,
