@@ -21,6 +21,17 @@ campagne_data.index = mois
 ruptures = int(df.iloc[1, 16])
 taux_adherence = int(df.iloc[1, 19])
 
+# Couleurs personnalisées pour les campagnes
+couleurs_personnalisees = {
+    "MOUSSE": "red",
+    "TEXLINE": "darkgreen",
+    "PRIMETEX": "yellow",
+    "NERA": "blue",
+    "TMAX": "brown",
+    "SPORISOL": "gray",
+    "TARABUS": "lightgreen"
+}
+
 # Sélection du mois
 mois_selectionne = st.selectbox("Choisir un mois :", mois)
 pic_mois_realise = pic_realise.loc[mois_selectionne]
@@ -37,7 +48,12 @@ with tabs[0]:
 
 with tabs[1]:
     st.subheader("Répartition des m² réalisés par campagne")
-    fig_pie = px.pie(values=campagne_mois.values, names=campagne_mois.index)
+    fig_pie = px.pie(
+        values=campagne_mois.values,
+        names=campagne_mois.index,
+        color=campagne_mois.index,
+        color_discrete_map=couleurs_personnalisees
+    )
     st.plotly_chart(fig_pie, use_container_width=True)
 
 with tabs[2]:
