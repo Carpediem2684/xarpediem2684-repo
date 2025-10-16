@@ -4,8 +4,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-st.set_page_config(page_title='Dashboard PIC', layout='centered')
-st.title('📊 Dashboard PIC - Mobile Friendly')
+st.set_page_config(page_title='Dashboard', layout='centered')
+st.title('📊 Dashboard 4M')
 
 # Lecture du fichier Excel
 df = pd.read_excel("Essai appli dashboard.xlsx", sheet_name="2025", engine="openpyxl", header=None)
