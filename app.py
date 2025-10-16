@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -53,3 +54,14 @@ fig_gauge = go.Figure(go.Indicator(
     )
 ))
 st.plotly_chart(fig_gauge, use_container_width=True)
+
+# Nouveau graphique : Histogramme par semaine
+st.subheader("Évolution des m² réalisés par semaine et par campagne")
+data = {
+    'Semaine': ['S-4', 'S-4', 'S-3', 'S-3', 'S-2', 'S-2', 'S-1', 'S-1'],
+    'Campagne': ['MOUSSE', 'TEXLINE', 'MOUSSE', 'TEXLINE', 'MOUSSE', 'TEXLINE', 'MOUSSE', 'TEXLINE'],
+    'm² Réalisés': [100, 150, 120, 180, 130, 200, 140, 220]
+}
+df_semaine = pd.DataFrame(data)
+fig_bar = px.bar(df_semaine, x='Semaine', y='m² Réalisés', color='Campagne', barmode='group')
+st.plotly_chart(fig_bar, use_container_width=True)
