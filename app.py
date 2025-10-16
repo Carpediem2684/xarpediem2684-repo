@@ -47,7 +47,7 @@ with tabs[0]:
     col2.metric("PIC Prévu", f"{pic_mois_prevu} m²")
 
 with tabs[1]:
-    st.subheader("Répartition des m² réalisés par campagne")
+    st.subheader("Répartition des km² réalisés par campagne")
     fig_pie = px.pie(
         values=campagne_mois.values,
         names=campagne_mois.index,
