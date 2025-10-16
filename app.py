@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -7,19 +6,27 @@ import plotly.graph_objects as go
 st.set_page_config(page_title='Dashboard PIC', layout='wide')
 st.title('Dashboard PIC')
 
-mois = {mois}
-pic_realise = pd.Series({pic_realise.tolist()}, index=mois)
-pic_prevu = pd.Series({pic_prevu.tolist()}, index=mois)
-campagnes = {campagnes}
-campagne_data = pd.DataFrame({campagne_data.to_dict()}, index=mois)
-ruptures = {ruptures}
-taux_adherence = {taux_adherence}
+# Lecture du fichier Excel
+df = pd.read_excel("Essai appli dashboard.xlsx", sheet_name="2025", engine="openpyxl", header=None)
 
+# Extraction des données
+mois = df.iloc[2:14, 0].tolist()
+pic_realise = pd.Series(pd.to_numeric(df.iloc[2:14, 1], errors='coerce').fillna(0).astype(int).values, index=mois)
+pic_prevu = pd.Series(pd.to_numeric(df.iloc[2:14, 2], errors='coerce').fillna(0).astype(int).values, index=mois)
+campagnes = df.iloc[1, 7:14].tolist()
+campagne_data = df.iloc2:14[1]()
+campagne_data.columns = campagnes
+campagne_data.index = mois
+ruptures = int(df.iloc[1, 16])
+taux_adherence = int(df.iloc[1, 19])
+
+# Sélection du mois
 mois_selectionne = st.selectbox("Choisir un mois :", mois)
-pic_mois_realise = pic_realise[mois_selectionne]
-pic_mois_prevu = pic_prevu[mois_selectionne]
+pic_mois_realise = pic_realise.loc[mois_selectionne]
+pic_mois_prevu = pic_prevu.loc[mois_selectionne]
 campagne_mois = campagne_data.loc[mois_selectionne]
 
+# Onglets
 tabs = st.tabs(["KPI", "Répartition", "Évolution", "Heatmap", "Ruptures", "Adhérence"])
 
 with tabs[0]:
