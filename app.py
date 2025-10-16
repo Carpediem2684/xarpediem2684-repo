@@ -4,8 +4,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-st.set_page_config(page_title='Dashboard PIC', layout='wide')
-st.title('Dashboard PIC')
+st.set_page_config(page_title='Dashboard', layout='wide')
+st.title('Dashboard')
 
 # Lecture du fichier Excel
 df = pd.read_excel("Essai appli dashboard.xlsx", sheet_name="2025", engine="openpyxl", header=None)
@@ -52,7 +52,7 @@ with tabs[0]:
     st.plotly_chart(fig_line, use_container_width=True)
 
 with tabs[1]:
-    st.subheader("Répartition des m² réalisés par campagne")
+    st.subheader("Répartition des km² réalisés par campagne")
     fig_pie = px.pie(
         values=campagne_mois.values,
         names=campagne_mois.index,
