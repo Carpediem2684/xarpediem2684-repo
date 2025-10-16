@@ -49,13 +49,14 @@ with tabs[0]:
 with tabs[1]:
     st.subheader("Répartition des m² réalisés par campagne")
     fig_pie = px.pie(
-    values=campagne_mois.values,
-    names=campagne_mois.index,
-    color=campagne_mois.index,
-    color_discrete_map=couleurs_personnalisees,
-    hole=0.3
-)
-fig_pie.update_traces(textinfo='label+value', textfont_size=14)
+        values=campagne_mois.values,
+        names=campagne_mois.index,
+        color=campagne_mois.index,
+        color_discrete_map=couleurs_personnalisees,
+        hole=0.3
+    )
+    fig_pie.update_traces(textinfo='label+value', textfont_size=14)
+    st.plotly_chart(fig_pie, use_container_width=True)
 
 with tabs[2]:
     st.subheader("Évolution mensuelle du PIC")
