@@ -6,14 +6,30 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title='Dashboard PIC', layout='wide')
 
-# Sidebar
-with st.sidebar:
-    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Logo_Gerflor.svg/2560px-Logo_Gerflor.svg.png", width=150)
-    st.title("Menu")
-    menu = st.radio("Navigation", ["Accueil", "KPI", "Graphiques", "Ruptures", "Adhérence"])
-    mois_selectionne = st.selectbox("Choisir un mois", ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"])
+# CSS pour fond dégradé
+st.markdown('''
+    <style>
+    body {
+        background: linear-gradient(to right, #8e44ad, #e84393);
+        color: white;
+    }
+    .block-container {
+        padding-top: 2rem;
+    }
+    </style>
+''', unsafe_allow_html=True)
 
-# Lecture du fichier Excel
+# Page d'accueil : sélection de l'UAP
+st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Logo_Gerflor.svg/2560px-Logo_Gerflor.svg.png", width=150)
+st.sidebar.title("Sélection UAP")
+uap_selection = st.sidebar.selectbox("Choisir une UAP", ["4M", "2M", "P2000", "KLAM"])
+mois_selectionne = st.sidebar.selectbox("Choisir un mois", ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"])
+
+if uap_selection != "4M":
+    st.markdown(f"<h2 style='text-align:center;'>Dashboard PIC - {uap_selection}</h2>", unsafe_allow_html=True)
+    st.warning("Données non disponibles pour cette UAP.")
+else:
+    # Lecture du fichier Excel
 df = pd.read_excel("Essai appli dashboard.xlsx", sheet_name="2025", engine="openpyxl", header=None)
 mois = df.iloc[2:14, 0].tolist()
 pic_realise = pd.Series(pd.to_numeric(df.iloc[2:14, 1], errors='coerce').fillna(0).astype(int).values, index=mois)
@@ -25,17 +41,13 @@ campagne_data.index = mois
 ruptures = int(df.iloc[1, 16])
 taux_adherence = int(df.iloc[1, 19])
 
-# KPI Cards
-if menu == "Accueil" or menu == "KPI":
-    st.markdown("<h1 style='text-align:center; color:#e84393;'>Dashboard PIC 2025</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - 4M</h1>", unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} m²")
     col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} m²")
     col3.metric("Ruptures", f"{ruptures}")
     col4.metric("Adhérence S-1", f"{taux_adherence}%")
 
-# Graphiques
-if menu == "Graphiques":
     st.subheader("Évolution mensuelle du PIC")
     df_evol = pd.DataFrame({"Mois": mois, "PIC Réalisé": pic_realise.values, "PIC Prévu": pic_prevu.values})
     fig_line = px.line(df_evol, x="Mois", y=["PIC Réalisé", "PIC Prévu"], markers=True)
@@ -59,13 +71,6 @@ if menu == "Graphiques":
     fig_heatmap = px.imshow(campagne_data.T, text_auto=True, aspect="auto", color_continuous_scale="Viridis")
     st.plotly_chart(fig_heatmap, use_container_width=True)
 
-# Ruptures
-if menu == "Ruptures":
-    st.subheader("Ruptures client")
-    st.write(f"Nombre de ruptures : {ruptures}")
-
-# Adhérence
-if menu == "Adhérence":
     st.subheader("Taux d'adhérence S-1")
     fig_gauge = go.Figure(go.Indicator(
         mode="gauge+number",
