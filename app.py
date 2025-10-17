@@ -3,10 +3,11 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from datetime import datetime
 
 st.set_page_config(page_title='Dashboard PIC', layout='wide')
 
-# CSS pour fond dégradé
+# CSS pour fond dégradé et réduction des marges
 st.markdown('''
     <style>
     body {
@@ -14,22 +15,26 @@ st.markdown('''
         color: white;
     }
     .block-container {
-        padding-top: 2rem;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
     }
     </style>
 ''', unsafe_allow_html=True)
 
-# Page d'accueil : sélection de l'UAP
+# Sidebar : sélection UAP et mois
 st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Logo_Gerflor.svg/2560px-Logo_Gerflor.svg.png", width=150)
 st.sidebar.title("Sélection UAP")
 uap_selection = st.sidebar.selectbox("Choisir une UAP", ["4M", "2M", "P2000", "KLAM"])
 mois_selectionne = st.sidebar.selectbox("Choisir un mois", ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"])
 
+# Affichage date du jour
+date_du_jour = datetime.today().strftime('%d/%m/%Y')
+
 if uap_selection != "4M":
     st.markdown(f"<h2 style='text-align:center;'>Dashboard PIC - {uap_selection}</h2>", unsafe_allow_html=True)
     st.warning("Données non disponibles pour cette UAP.")
 else:
-    # Lecture du fichier Excel et extraction des données
+    # Lecture du fichier Excel
     df = pd.read_excel("Essai appli dashboard.xlsx", sheet_name="2025", engine="openpyxl", header=None)
     mois = df.iloc[2:14, 0].tolist()
     pic_realise = pd.Series(pd.to_numeric(df.iloc[2:14, 1], errors='coerce').fillna(0).astype(int).values, index=mois)
@@ -52,29 +57,39 @@ else:
     }
 
     st.markdown("<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - 4M</h1>", unsafe_allow_html=True)
+
+    # KPI en ligne
+    st.markdown(f"<p style='text-align:right; font-size:14px;'>Date du jour : {date_du_jour}</p>", unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} m²")
     col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} m²")
     col3.metric("Ruptures", f"{ruptures}")
     col4.metric("Adhérence S-1", f"{taux_adherence}%")
 
-    st.subheader("Évolution mensuelle du PIC")
-    df_evol = pd.DataFrame({"Mois": mois, "PIC Réalisé": pic_realise.values, "PIC Prévu": pic_prevu.values})
-    fig_line = px.line(df_evol, x="Mois", y=["PIC Réalisé", "PIC Prévu"], markers=True)
-    st.plotly_chart(fig_line, use_container_width=True)
+    # Graphiques en grille
+    col5, col6 = st.columns(2)
+    with col5:
+        st.markdown("### Évolution mensuelle du PIC")
+        df_evol = pd.DataFrame({"Mois": mois, "PIC Réalisé": pic_realise.values, "PIC Prévu": pic_prevu.values})
+        fig_line = px.line(df_evol, x="Mois", y=["PIC Réalisé", "PIC Prévu"], markers=True)
+        fig_line.update_layout(height=300)
+        st.plotly_chart(fig_line, use_container_width=True)
 
-    st.subheader("Répartition des m² réalisés par campagne")
-    campagne_mois = campagne_data.loc[mois_selectionne]
-    fig_pie = px.pie(values=campagne_mois.values, names=campagne_mois.index, color=campagne_mois.index,
-                     color_discrete_map=couleurs_personnalisees, hole=0.4)
-    fig_pie.update_traces(textinfo='label+value')
-    st.plotly_chart(fig_pie, use_container_width=True)
+    with col6:
+        st.markdown("### Répartition par campagne")
+        campagne_mois = campagne_data.loc[mois_selectionne]
+        fig_pie = px.pie(values=campagne_mois.values, names=campagne_mois.index, color=campagne_mois.index,
+                         color_discrete_map=couleurs_personnalisees, hole=0.4)
+        fig_pie.update_traces(textinfo='label+value')
+        fig_pie.update_layout(height=300)
+        st.plotly_chart(fig_pie, use_container_width=True)
 
-    st.subheader("Heatmap des campagnes")
+    st.markdown("### Heatmap des campagnes")
     fig_heatmap = px.imshow(campagne_data.T, text_auto=True, aspect="auto", color_continuous_scale="Viridis")
+    fig_heatmap.update_layout(height=300)
     st.plotly_chart(fig_heatmap, use_container_width=True)
 
-    st.subheader("Taux d'adhérence S-1")
+    st.markdown("### Taux d'adhérence S-1")
     fig_gauge = go.Figure(go.Indicator(
         mode="gauge+number",
         value=taux_adherence,
@@ -89,4 +104,6 @@ else:
             ]
         )
     ))
+    fig_gauge.update_layout(height=300)
     st.plotly_chart(fig_gauge, use_container_width=True)
+    
