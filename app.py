@@ -41,6 +41,16 @@ else:
     ruptures = int(df.iloc[1, 16])
     taux_adherence = int(df.iloc[1, 19])
 
+    couleurs_personnalisees = {
+        "MOUSSE": "#e74c3c",
+        "TEXLINE": "#145A32",
+        "PRIMETEX": "#F4D03F",
+        "NERA": "#3498db",
+        "TMAX": "#6E2C00",
+        "SPORISOL": "#7f8c8d",
+        "TARABUS": "#27ae60"
+    }
+
     st.markdown("<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - 4M</h1>", unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} m²")
