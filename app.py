@@ -63,7 +63,7 @@ else:
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} km²")
     col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} km²")
-    col3.metric("Ruptures", f"{rupturesde cette semaine}")
+    col3.metric("Ruptures", f"{rupturesde}")
     col4.metric("Adhérence S-1", f"{taux_adherence}%")
 
     # Graphiques en grille
