@@ -43,8 +43,7 @@ if uap_selection != "4M":
 else:
     @st.cache_data(ttl=60)
     def load_data():
-        response = requests.get("{sharepoint_url}")  # Remplacer {sharepoint_url} par l'URL réelle
-        return pd.read_excel(BytesIO(response.content), sheet_name="2025", engine="openpyxl", header=None)
+        return pd.read_excel("donnees_pic.xlsx", sheet_name="2025", engine="openpyxl", header=None)
 
     df = load_data()
     mois = df.iloc[2:14, 0].tolist()
