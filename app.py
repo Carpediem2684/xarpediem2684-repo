@@ -27,6 +27,10 @@ st.sidebar.title("Sélection UAP")
 uap_selection = st.sidebar.selectbox("Choisir une UAP", ["4M", "2M", "P2000", "KLAM"])
 mois_selectionne = st.sidebar.selectbox("Choisir un mois", ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"])
 
+# Bouton de rafraîchissement
+if st.sidebar.button("🔄 Rafraîchir les données"):
+    st.cache_data.clear()
+
 # Affichage date du jour
 date_du_jour = datetime.today().strftime('%d/%m/%Y')
 
@@ -34,8 +38,11 @@ if uap_selection != "4M":
     st.markdown(f"<h2 style='text-align:center;'>Dashboard PIC - {uap_selection}</h2>", unsafe_allow_html=True)
     st.warning("Données non disponibles pour cette UAP.")
 else:
-    # Lecture du fichier Excel
-    df = pd.read_excel("Essai appli dashboard.xlsx", sheet_name="2025", engine="openpyxl", header=None)
+    @st.cache_data(ttl=60)
+    def load_data():
+        return pd.read_excel("https://gerflorgroup-my.sharepoint.com/:x:/r/personal/yannick_tetart_gerflor_com/_layouts/15/Doc.aspx?sourcedoc=%7BE06C5528-85F2-454F-A8D0-08C7B4F38DB0%7D&file=Essai%20appli%20dashboard.xlsx&action=default&mobileredirect=true", sheet_name="2025", engine="openpyxl", header=None)
+
+    df = load_data()
     mois = df.iloc[2:14, 0].tolist()
     pic_realise = pd.Series(pd.to_numeric(df.iloc[2:14, 1], errors='coerce').fillna(0).astype(int).values, index=mois)
     pic_prevu = pd.Series(pd.to_numeric(df.iloc[2:14, 2], errors='coerce').fillna(0).astype(int).values, index=mois)
@@ -57,16 +64,14 @@ else:
     }
 
     st.markdown("<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - 4M</h1>", unsafe_allow_html=True)
-
-    # KPI en ligne
     st.markdown(f"<p style='text-align:right; font-size:14px;'>Date du jour : {date_du_jour}</p>", unsafe_allow_html=True)
+
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} m²")
     col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} m²")
     col3.metric("Ruptures", f"{ruptures}")
     col4.metric("Adhérence S-1", f"{taux_adherence}%")
 
-    # Graphiques en grille
     col5, col6 = st.columns(2)
     with col5:
         st.markdown("### Évolution mensuelle du PIC")
@@ -106,4 +111,3 @@ else:
     ))
     fig_gauge.update_layout(height=300)
     st.plotly_chart(fig_gauge, use_container_width=True)
-    
