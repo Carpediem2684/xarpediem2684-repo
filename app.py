@@ -53,8 +53,8 @@ else:
 
     st.markdown("<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - 4M</h1>", unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} m²")
-    col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} m²")
+    col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} km²")
+    col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} km²")
     col3.metric("Ruptures", f"{ruptures}")
     col4.metric("Adhérence S-1", f"{taux_adherence}%")
 
@@ -63,7 +63,7 @@ else:
     fig_line = px.line(df_evol, x="Mois", y=["PIC Réalisé", "PIC Prévu"], markers=True)
     st.plotly_chart(fig_line, use_container_width=True)
 
-    st.subheader("Répartition des m² réalisés par campagne")
+    st.subheader("Répartition des km² réalisés par campagne")
     campagne_mois = campagne_data.loc[mois_selectionne]
     fig_pie = px.pie(values=campagne_mois.values, names=campagne_mois.index, color=campagne_mois.index,
                      color_discrete_map=couleurs_personnalisees, hole=0.4)
