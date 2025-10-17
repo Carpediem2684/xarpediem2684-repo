@@ -31,7 +31,7 @@ mois_selectionne = st.sidebar.selectbox("Choisir un mois", ["Janvier", "Février
 date_du_jour = datetime.today().strftime('%d/%m/%Y')
 
 if uap_selection != "4M":
-    st.markdown(f"<h2 style='text-align:center;'>Dashboard PIC - {uap_selection}</h2>", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='text-align:center;'>Dashboard - {uap_selection}</h2>", unsafe_allow_html=True)
     st.warning("Données non disponibles pour cette UAP.")
 else:
     # Lecture du fichier Excel
@@ -61,9 +61,9 @@ else:
     # KPI en ligne
     st.markdown(f"<p style='text-align:right; font-size:14px;'>Date du jour : {date_du_jour}</p>", unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} m²")
-    col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} m²")
-    col3.metric("Ruptures", f"{ruptures}")
+    col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} km²")
+    col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} km²")
+    col3.metric("Ruptures", f"{rupturesde cette semaine}")
     col4.metric("Adhérence S-1", f"{taux_adherence}%")
 
     # Graphiques en grille
