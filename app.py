@@ -4,6 +4,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
+from io import BytesIO
+import requests
 
 st.set_page_config(page_title='Dashboard PIC', layout='wide')
 
@@ -40,7 +42,8 @@ if uap_selection != "4M":
 else:
     @st.cache_data(ttl=60)
     def load_data():
-        return pd.read_excel("https://gerflorgroup-my.sharepoint.com/:x:/r/personal/yannick_tetart_gerflor_com/_layouts/15/Doc.aspx?sourcedoc=%7BE06C5528-85F2-454F-A8D0-08C7B4F38DB0%7D&file=Essai%20appli%20dashboard.xlsx&action=default&mobileredirect=true", sheet_name="2025", engine="openpyxl", header=None)
+        response = requests.get("{sharepoint_url}")
+        return pd.read_excel(BytesIO(response.content), sheet_name="2025", engine="openpyxl", header=None)
 
     df = load_data()
     mois = df.iloc[2:14, 0].tolist()
@@ -111,3 +114,4 @@ else:
     ))
     fig_gauge.update_layout(height=300)
     st.plotly_chart(fig_gauge, use_container_width=True)
+    
