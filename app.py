@@ -29,18 +29,6 @@ if uap_selection != "4M":
     st.markdown(f"<h2 style='text-align:center;'>Dashboard PIC - {uap_selection}</h2>", unsafe_allow_html=True)
     st.warning("Données non disponibles pour cette UAP.")
 else:
-    # Lecture du fichier Excel
-df = pd.read_excel("Essai appli dashboard.xlsx", sheet_name="2025", engine="openpyxl", header=None)
-mois = df.iloc[2:14, 0].tolist()
-pic_realise = pd.Series(pd.to_numeric(df.iloc[2:14, 1], errors='coerce').fillna(0).astype(int).values, index=mois)
-pic_prevu = pd.Series(pd.to_numeric(df.iloc[2:14, 2], errors='coerce').fillna(0).astype(int).values, index=mois)
-campagnes = df.iloc[1, 7:14].tolist()
-campagne_data = df.iloc[2:14, 7:14]
-campagne_data.columns = campagnes
-campagne_data.index = mois
-ruptures = int(df.iloc[1, 16])
-taux_adherence = int(df.iloc[1, 19])
-
     st.markdown("<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - 4M</h1>", unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} m²")
@@ -55,15 +43,8 @@ taux_adherence = int(df.iloc[1, 19])
 
     st.subheader("Répartition des m² réalisés par campagne")
     campagne_mois = campagne_data.loc[mois_selectionne]
-    fig_pie = px.pie(values=campagne_mois.values, names=campagne_mois.index, color=campagne_mois.index, color_discrete_map={
-        "MOUSSE": "#e74c3c",
-        "TEXLINE": "#145A32",
-        "PRIMETEX": "#F4D03F",
-        "NERA": "#3498db",
-        "TMAX": "#6E2C00",
-        "SPORISOL": "#7f8c8d",
-        "TARABUS": "#27ae60"
-    }, hole=0.4)
+    fig_pie = px.pie(values=campagne_mois.values, names=campagne_mois.index, color=campagne_mois.index,
+                     color_discrete_map={couleurs_personnalisees}, hole=0.4)
     fig_pie.update_traces(textinfo='label+value')
     st.plotly_chart(fig_pie, use_container_width=True)
 
