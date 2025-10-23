@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -6,7 +5,7 @@ from datetime import datetime
 
 st.set_page_config(page_title='Dashboard PIC', layout='wide')
 
-# CSS pour fond dégradé et réduction des marges
+# CSS pour fond dégradé et style des textes
 st.markdown("""
     <style>
     body {
@@ -16,6 +15,13 @@ st.markdown("""
     .block-container {
         padding-top: 1rem;
         padding-bottom: 1rem;
+    }
+    h1, h4, h3, h2, p, div {
+        font-weight: bold !important;
+    }
+    .metric-label {
+        font-size: 22px !important;
+        font-weight: bold !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -29,7 +35,7 @@ mois_selectionne = st.sidebar.selectbox("Choisir un mois", ["Janvier", "Février
 date_du_jour = datetime.today().strftime('%d/%m/%Y')
 
 st.markdown(f"<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - {uap_selection}</h1>", unsafe_allow_html=True)
-st.markdown(f"<p style='text-align:right; font-size:14px;'>Date du jour : {date_du_jour}</p>", unsafe_allow_html=True)
+st.markdown(f"<p style='text-align:right; font-size:16px; font-weight:bold;'>Date du jour : {date_du_jour}</p>", unsafe_allow_html=True)
 
 if uap_selection == "4M":
     df = pd.read_excel("Essai appli dashboard (1).xlsx", sheet_name="2025", engine="openpyxl", header=None)
@@ -45,9 +51,12 @@ if uap_selection == "4M":
     st.markdown(f"<h4 style='color:white;'>Taux d'adhérence S-1 : {taux_adherence:.1f}%</h4>", unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns(3)
-    col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} km²")
-    col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} km²")
-    col3.metric("Ruptures cette semaine", f"{ruptures}")
+    col1.markdown(f"<div class='metric-label'>PIC Réalisé</div>", unsafe_allow_html=True)
+    col1.metric("", f"{pic_realise[mois_selectionne]} km²")
+    col2.markdown(f"<div class='metric-label'>PIC Prévu</div>", unsafe_allow_html=True)
+    col2.metric("", f"{pic_prevu[mois_selectionne]} km²")
+    col3.markdown(f"<div class='metric-label'>Ruptures cette semaine</div>", unsafe_allow_html=True)
+    col3.metric("", f"{ruptures}")
 
     campagnes = df.iloc[1, 7:14].tolist()
     campagne_data = df.iloc[2:14, 7:14]
@@ -71,9 +80,14 @@ if uap_selection == "4M":
     with col_gauche:
         st.markdown("#### Répartition par campagne")
         fig_pie = go.Figure(data=[
-            go.Pie(labels=campagne_mois.index, values=campagne_mois.values,
-                   marker=dict(colors=["#e74c3c", "#145A32", "#F4D03F", "#3498db", "#6E2C00", "#7f8c8d", "#27ae60"]),
-                   hole=0.4)
+            go.Pie(
+                labels=campagne_mois.index,
+                values=campagne_mois.values,
+                marker=dict(colors=["#e74c3c", "#145A32", "#F4D03F", "#3498db", "#6E2C00", "#7f8c8d", "#27ae60"]),
+                hole=0.4,
+                textinfo='label+value',  # ✅ Affiche nom + valeur
+                hoverinfo='label+percent+value'
+            )
         ])
         fig_pie.update_layout(height=400, legend=dict(orientation="h", y=-0.1))
         st.plotly_chart(fig_pie, use_container_width=True)
