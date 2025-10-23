@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
+import plotly.graph_objects as go
 from datetime import datetime
 
 st.set_page_config(page_title='Dashboard PIC', layout='wide')
@@ -19,50 +19,48 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Sidebar : sélection UAP et mois
+# Sidebar
 st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Logo_Gerflor.svg/2560px-Logo_Gerflor.svg.png", width=150)
 st.sidebar.title("Sélection UAP")
 uap_selection = st.sidebar.selectbox("Choisir une UAP", ["4M", "2M", "P2000", "KLAM"])
-mois_selectionne = st.sidebar.selectbox("Choisir un mois", ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"])
 
-# Affichage date du jour
-date_du_jour = datetime.today().strftime('%d/%m/%Y')
+st.markdown("<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - 4M</h1>", unsafe_allow_html=True)
 
-if uap_selection != "4M":
-    st.markdown(f"<h2 style='text-align:center;'>Dashboard PIC - {uap_selection}</h2>", unsafe_allow_html=True)
-    st.warning("Données non disponibles pour cette UAP.")
-else:
-    # Lecture du fichier Excel
-    df = pd.read_excel("Essai appli dashboard (1).xlsx", sheet_name="2025", engine="openpyxl", header=None)
-    mois = df.iloc[2:14, 0].tolist()
-    pic_realise = pd.Series(pd.to_numeric(df.iloc[2:14, 1], errors='coerce').fillna(0).astype(int).values, index=mois)
-    pic_prevu = pd.Series(pd.to_numeric(df.iloc[2:14, 2], errors='coerce').fillna(0).astype(int).values, index=mois)
-    ruptures = int(df.iloc[1, 16])
+# Lecture des données
+df = pd.read_excel("Essai appli dashboard (1).xlsx", sheet_name="2025", engine="openpyxl", header=None)
 
-    st.markdown("<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - 4M</h1>", unsafe_allow_html=True)
-    st.markdown(f"<p style='text-align:right; font-size:14px;'>Date du jour : {date_du_jour}</p>", unsafe_allow_html=True)
+# Données hebdomadaires
+weekly_data = df.iloc[2:51, [21, 22]]
+weekly_data.columns = ["Semaine", "Taux d'adhérence"]
+weekly_data.dropna(inplace=True)
 
-    col1, col2, col3 = st.columns(3)
-    col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} km²")
-    col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} km²")
-    col3.metric("Ruptures cette semaine", f"{ruptures}")
+# Conversion en numérique et pourcentage
+weekly_data["Taux d'adhérence"] = pd.to_numeric(weekly_data["Taux d'adhérence"], errors="coerce")
+weekly_data["Taux d'adhérence"] = (weekly_data["Taux d'adhérence"] * 100).round(1)
+weekly_data["Semaine"] = weekly_data["Semaine"].astype(int)
 
-    # ✅ Graphique hebdomadaire du taux d'adhérence
-    weekly_data = df.iloc[2:51, [22]]
-    weekly_data.columns = ["Taux d'adhérence"]
-    weekly_data.index = [f"Semaine {int(df.iloc[i, 21])}" for i in range(2, 51)]
-    weekly_data["Taux d'adhérence"] = (weekly_data["Taux d'adhérence"] * 100).round(1)
+# Couleur dynamique pour les points
+colors = ["green" if val >= 85 else "red" for val in weekly_data["Taux d'adhérence"]]
 
-    st.markdown("### Évolution hebdomadaire du taux d'adhérence")
-    fig_weekly = px.line(weekly_data, x=weekly_data.index, y="Taux d'adhérence",
-                         title="Évolution hebdomadaire du taux d'adhérence",
-                         markers=True)
-    fig_weekly.update_layout(height=400, yaxis_title="% d'adhérence")
-    st.plotly_chart(fig_weekly, use_container_width=True)
+# Graphique hebdomadaire avec ligne objectif
+fig = go.Figure()
+fig.add_trace(go.Scatter(
+    x=weekly_data["Semaine"],
+    y=weekly_data["Taux d'adhérence"],
+    mode='markers+lines',
+    marker=dict(color=colors, size=10),
+    name="Taux d'adhérence"
+))
+fig.add_trace(go.Scatter(
+    x=weekly_data["Semaine"],
+    y=[85]*len(weekly_data),
+    mode='lines',
+    name="Objectif",
+    line=dict(dash='dash', color='blue')
+))
+fig.update_layout(title="Évolution hebdomadaire du taux d'adhérence",
+                  xaxis_title="Semaine",
+                  yaxis_title="% d'adhérence",
+                  height=400)
 
-    # ✅ Graphique PIC en bas
-    st.markdown("### Évolution mensuelle du PIC")
-    df_evol = pd.DataFrame({"Mois": mois, "PIC Réalisé": pic_realise.values, "PIC Prévu": pic_prevu.values})
-    fig_line = px.line(df_evol, x="Mois", y=["PIC Réalisé", "PIC Prévu"], markers=True)
-    fig_line.update_layout(height=300)
-    st.plotly_chart(fig_line, use_container_width=True)
+st.plotly_chart(fig, use_container_width=True)
