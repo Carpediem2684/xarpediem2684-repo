@@ -54,7 +54,7 @@ if uap_selection == "4M":
     # ✅ Camembert des campagnes
     st.markdown("### Répartition par campagne")
     campagnes = df.iloc[1, 7:14].tolist()
-    campagne_data = df.iloc[2:14, 7:14]  # ✅ Correction ici
+    campagne_data = df.iloc[2:14, 7:14]
     campagne_data.columns = campagnes
     campagne_data.index = mois
     campagne_mois = campagne_data.loc[mois_selectionne]
@@ -67,7 +67,7 @@ if uap_selection == "4M":
     fig_pie.update_layout(height=300)
     st.plotly_chart(fig_pie, use_container_width=True)
 
-    # ✅ Graphique hebdomadaire du taux d'adhérence
+    # ✅ Graphique hebdomadaire du taux d'adhérence avec pourcentages affichés
     st.markdown("### Évolution hebdomadaire du taux d'adhérence")
     weekly_data = df.iloc[2:51, [21, 22]]
     weekly_data.columns = ["Semaine", "Taux d'adhérence"]
@@ -79,10 +79,22 @@ if uap_selection == "4M":
     colors = ["green" if val >= 85 else "red" for val in weekly_data["Taux d'adhérence"]]
 
     fig_weekly = go.Figure()
-    fig_weekly.add_trace(go.Scatter(x=weekly_data["Semaine"], y=weekly_data["Taux d'adhérence"],
-                                    mode='markers+lines', marker=dict(color=colors, size=10), name="Taux d'adhérence"))
-    fig_weekly.add_trace(go.Scatter(x=weekly_data["Semaine"], y=[85]*len(weekly_data),
-                                    mode='lines', name="Objectif", line=dict(dash='dash', color='blue')))
+    fig_weekly.add_trace(go.Scatter(
+        x=weekly_data["Semaine"],
+        y=weekly_data["Taux d'adhérence"],
+        mode='markers+lines+text',
+        marker=dict(color=colors, size=10),
+        name="Taux d'adhérence",
+        text=[f"{val:.1f}%" for val in weekly_data["Taux d'adhérence"]],
+        textposition="top center"
+    ))
+    fig_weekly.add_trace(go.Scatter(
+        x=weekly_data["Semaine"],
+        y=[85]*len(weekly_data),
+        mode='lines',
+        name="Objectif",
+        line=dict(dash='dash', color='blue')
+    ))
     fig_weekly.update_layout(height=400, xaxis_title="Semaine", yaxis_title="% d'adhérence")
     st.plotly_chart(fig_weekly, use_container_width=True)
 
