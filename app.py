@@ -1,7 +1,9 @@
+
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
+
 st.set_page_config(page_title='Dashboard PIC', layout='wide')
 
 # CSS pour fond dégradé et réduction des marges
@@ -60,6 +62,7 @@ if uap_selection == "4M":
     weekly_data["Taux d'adhérence"] = (weekly_data["Taux d'adhérence"] * 100).round(1)
     weekly_data["Semaine"] = weekly_data["Semaine"].astype(int)
 
+    semaines_completes = list(range(1, 51))
     colors = ["green" if val >= 85 else "red" for val in weekly_data["Taux d'adhérence"]]
 
     st.markdown("### Répartition par campagne et évolution du taux d'adhérence")
@@ -88,13 +91,18 @@ if uap_selection == "4M":
             textposition="top center"
         ))
         fig_weekly.add_trace(go.Scatter(
-            x=weekly_data["Semaine"],
-            y=[85]*len(weekly_data),
+            x=semaines_completes,
+            y=[85]*len(semaines_completes),
             mode='lines',
             name="Objectif",
             line=dict(dash='dash', color='blue')
         ))
-        fig_weekly.update_layout(height=400, xaxis_title="Semaine", yaxis_title="% d'adhérence")
+        fig_weekly.update_layout(
+            height=400,
+            xaxis_title="Semaine",
+            yaxis_title="% d'adhérence",
+            xaxis=dict(tickmode='array', tickvals=semaines_completes)
+        )
         st.plotly_chart(fig_weekly, use_container_width=True)
 
     st.markdown("### Évolution mensuelle du PIC")
