@@ -7,7 +7,7 @@ from datetime import datetime
 st.set_page_config(page_title='Dashboard PIC', layout='wide')
 
 # CSS pour fond dégradé et réduction des marges
-st.markdown('''
+st.markdown("""
     <style>
     body {
         background: linear-gradient(to right, #8e44ad, #e84393);
@@ -18,7 +18,7 @@ st.markdown('''
         padding-bottom: 1rem;
     }
     </style>
-''', unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 # Sidebar : sélection UAP et mois
 st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Logo_Gerflor.svg/2560px-Logo_Gerflor.svg.png", width=150)
@@ -33,13 +33,12 @@ if uap_selection != "4M":
     st.markdown(f"<h2 style='text-align:center;'>Dashboard PIC - {uap_selection}</h2>", unsafe_allow_html=True)
     st.warning("Données non disponibles pour cette UAP.")
 else:
-    # Lecture du fichier Excel
     df = pd.read_excel("Essai appli dashboard (1).xlsx", sheet_name="2025", engine="openpyxl", header=None)
     mois = df.iloc[2:14, 0].tolist()
     pic_realise = pd.Series(pd.to_numeric(df.iloc[2:14, 1], errors='coerce').fillna(0).astype(int).values, index=mois)
     pic_prevu = pd.Series(pd.to_numeric(df.iloc[2:14, 2], errors='coerce').fillna(0).astype(int).values, index=mois)
     campagnes = df.iloc[1, 7:14].tolist()
-    campagne_data = df.iloc[2:14, 7:14]
+    campagne_data = df.iloc2:14[1]()
     campagne_data.columns = campagnes
     campagne_data.index = mois
     ruptures = int(df.iloc[1, 16])
@@ -56,25 +55,35 @@ else:
     }
 
     st.markdown("<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - 4M</h1>", unsafe_allow_html=True)
-
-    # KPI en ligne
     st.markdown(f"<p style='text-align:right; font-size:14px;'>Date du jour : {date_du_jour}</p>", unsafe_allow_html=True)
+
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} km²")
     col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} km²")
     col3.metric("Ruptures cette semaine", f"{ruptures}")
     col4.metric("Adhérence S-1", f"{taux_adherence}%")
 
+    # Nouveau graphique comparatif taux d'adhérence vs objectif
+    adherence_data = df.iloc[2:14, [22, 23]]
+    adherence_data.columns = ["Taux d'adhérence", "Objectif"]
+    adherence_data.index = mois
+
+    st.markdown("### Taux d'adhérence hebdomadaire vs Objectif")
+    st.dataframe(adherence_data)
+
+    fig_bar = px.bar(adherence_data, x=adherence_data.index, y=["Taux d'adhérence", "Objectif"],
+                     barmode="group", title="Comparaison du taux d'adhérence par mois")
+    fig_bar.update_layout(height=400)
+    st.plotly_chart(fig_bar, use_container_width=True)
+
+    # KPI écart à l'objectif
+    ecart = adherence_data.loc[mois_selectionne, "Taux d'adhérence"] - adherence_data.loc[mois_selectionne, "Objectif"]
+    ecart_percent = round(ecart * 100, 1)
+    st.metric("Écart à l'objectif", f"{ecart_percent}%")
+
     # Graphiques en grille
     col5, col6 = st.columns(2)
     with col5:
-        st.markdown("### Évolution mensuelle du PIC")
-        df_evol = pd.DataFrame({"Mois": mois, "PIC Réalisé": pic_realise.values, "PIC Prévu": pic_prevu.values})
-        fig_line = px.line(df_evol, x="Mois", y=["PIC Réalisé", "PIC Prévu"], markers=True)
-        fig_line.update_layout(height=300)
-        st.plotly_chart(fig_line, use_container_width=True)
-
-    with col6:
         st.markdown("### Répartition par campagne")
         campagne_mois = campagne_data.loc[mois_selectionne]
         fig_pie = px.pie(values=campagne_mois.values, names=campagne_mois.index, color=campagne_mois.index,
@@ -83,25 +92,15 @@ else:
         fig_pie.update_layout(height=300)
         st.plotly_chart(fig_pie, use_container_width=True)
 
-    st.markdown("### Heatmap des campagnes")
-    fig_heatmap = px.imshow(campagne_data.T, text_auto=True, aspect="auto", color_continuous_scale="Viridis")
-    fig_heatmap.update_layout(height=300)
-    st.plotly_chart(fig_heatmap, use_container_width=True)
+    with col6:
+        st.markdown("### Heatmap des campagnes")
+        fig_heatmap = px.imshow(campagne_data.T, text_auto=True, aspect="auto", color_continuous_scale="Viridis")
+        fig_heatmap.update_layout(height=300)
+        st.plotly_chart(fig_heatmap, use_container_width=True)
 
-    st.markdown("### Taux d'adhérence S-1")
-    fig_gauge = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=taux_adherence,
-        title=dict(text="Taux d'adhérence S-1"),
-        gauge=dict(
-            axis=dict(range=[0, 100]),
-            bar=dict(color="#e84393"),
-            steps=[
-                dict(range=[0, 50], color="#f8c6d8"),
-                dict(range=[50, 80], color="#f39cbb"),
-                dict(range=[80, 100], color="#e84393")
-            ]
-        )
-    ))
-    fig_gauge.update_layout(height=300)
-    st.plotly_chart(fig_gauge, use_container_width=True)
+    # Graphique PIC déplacé à la fin
+    st.markdown("### Évolution mensuelle du PIC")
+    df_evol = pd.DataFrame({"Mois": mois, "PIC Réalisé": pic_realise.values, "PIC Prévu": pic_prevu.values})
+    fig_line = px.line(df_evol, x="Mois", y=["PIC Réalisé", "PIC Prévu"], markers=True)
+    fig_line.update_layout(height=300)
+    st.plotly_chart(fig_line, use_container_width=True)
