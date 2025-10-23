@@ -54,7 +54,7 @@ if uap_selection == "4M":
     # ✅ Camembert des campagnes
     st.markdown("### Répartition par campagne")
     campagnes = df.iloc[1, 7:14].tolist()
-    campagne_data = df.iloc2:14[1]()
+    campagne_data = df.iloc[2:14, 7:14]()
     campagne_data.columns = campagnes
     campagne_data.index = mois
     campagne_mois = campagne_data.loc[mois_selectionne]
