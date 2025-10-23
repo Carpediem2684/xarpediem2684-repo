@@ -76,10 +76,11 @@ else:
     fig_bar.update_layout(height=400)
     st.plotly_chart(fig_bar, use_container_width=True)
 
-    # KPI écart à l'objectif
+    # KPI écart à l'objectif avec couleur dynamique
     ecart = adherence_data.loc[mois_selectionne, "Taux d'adhérence"] - adherence_data.loc[mois_selectionne, "Objectif"]
     ecart_percent = round(ecart * 100, 1)
-    st.metric("Écart à l'objectif", f"{ecart_percent}%")
+    couleur_ecart = "green" if ecart >= 0 else "red"
+    st.markdown(f"<h4 style='color:{couleur_ecart};'>Écart à l'objectif : {ecart_percent}%</h4>", unsafe_allow_html=True)
 
     # Graphiques en grille
     col5, col6 = st.columns(2)
