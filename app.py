@@ -39,13 +39,31 @@ if uap_selection == "4M":
     pic_realise = pd.Series(pd.to_numeric(df.iloc[2:14, 1], errors='coerce').fillna(0).astype(int).values, index=mois)
     pic_prevu = pd.Series(pd.to_numeric(df.iloc[2:14, 2], errors='coerce').fillna(0).astype(int).values, index=mois)
     ruptures = int(df.iloc[1, 16])
+    taux_adherence = float(df.iloc[1, 22]) * 100
+
+    st.markdown(f"<h4 style='color:white;'>Taux d'adhérence S-1 : {taux_adherence:.1f}%</h4>", unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns(3)
     col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} km²")
     col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} km²")
     col3.metric("Ruptures cette semaine", f"{ruptures}")
 
+    # ✅ Camembert des campagnes
+    st.markdown("### Répartition par campagne")
+    campagnes = df.iloc[1, 7:14].tolist()
+    campagne_data = df.iloc2:14[1]()
+    campagne_data.columns = campagnes
+    campagne_data.index = mois
+    campagne_mois = campagne_data.loc[mois_selectionne]
+
+    fig_pie = go.Figure(data=[go.Pie(labels=campagne_mois.index, values=campagne_mois.values,
+                                     marker=dict(colors=["#e74c3c", "#145A32", "#F4D03F", "#3498db", "#6E2C00", "#7f8c8d", "#27ae60"]),
+                                     hole=0.4)])
+    fig_pie.update_layout(height=300)
+    st.plotly_chart(fig_pie, use_container_width=True)
+
     # ✅ Graphique hebdomadaire du taux d'adhérence
+    st.markdown("### Évolution hebdomadaire du taux d'adhérence")
     weekly_data = df.iloc[2:51, [21, 22]]
     weekly_data.columns = ["Semaine", "Taux d'adhérence"]
     weekly_data.dropna(inplace=True)
@@ -55,16 +73,13 @@ if uap_selection == "4M":
 
     colors = ["green" if val >= 85 else "red" for val in weekly_data["Taux d'adhérence"]]
 
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=weekly_data["Semaine"], y=weekly_data["Taux d'adhérence"],
-                             mode='markers+lines', marker=dict(color=colors, size=10), name="Taux d'adhérence"))
-    fig.add_trace(go.Scatter(x=weekly_data["Semaine"], y=[85]*len(weekly_data),
-                             mode='lines', name="Objectif", line=dict(dash='dash', color='blue')))
-    fig.update_layout(title="Évolution hebdomadaire du taux d'adhérence",
-                      xaxis_title="Semaine",
-                      yaxis_title="% d'adhérence",
-                      height=400)
-    st.plotly_chart(fig, use_container_width=True)
+    fig_weekly = go.Figure()
+    fig_weekly.add_trace(go.Scatter(x=weekly_data["Semaine"], y=weekly_data["Taux d'adhérence"],
+                                    mode='markers+lines', marker=dict(color=colors, size=10), name="Taux d'adhérence"))
+    fig_weekly.add_trace(go.Scatter(x=weekly_data["Semaine"], y=[85]*len(weekly_data),
+                                    mode='lines', name="Objectif", line=dict(dash='dash', color='blue')))
+    fig_weekly.update_layout(height=400, xaxis_title="Semaine", yaxis_title="% d'adhérence")
+    st.plotly_chart(fig_weekly, use_container_width=True)
 
     # ✅ Graphique PIC mensuel
     st.markdown("### Évolution mensuelle du PIC")
