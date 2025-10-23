@@ -85,7 +85,7 @@ if uap_selection == "4M":
                 values=campagne_mois.values,
                 marker=dict(colors=["#e74c3c", "#145A32", "#F4D03F", "#3498db", "#6E2C00", "#7f8c8d", "#27ae60"]),
                 hole=0.4,
-                textinfo='label+value',  # ✅ Affiche nom + valeur
+                textinfo='label+value+percent',  # ✅ Affiche nom + valeur + %
                 hoverinfo='label+percent+value'
             )
         ])
