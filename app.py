@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -64,6 +65,9 @@ if uap_selection == "4M":
     campagne_data.index = mois
     campagne_mois = campagne_data.loc[mois_selectionne]
 
+    # ✅ Ajout de la catégorie AUTRES à 80 m²
+    campagne_mois["AUTRES"] = 80
+
     weekly_data = df.iloc[2:51, [21, 22]]
     weekly_data.columns = ["Semaine", "Taux d'adhérence"]
     weekly_data.dropna(inplace=True)
@@ -83,9 +87,9 @@ if uap_selection == "4M":
             go.Pie(
                 labels=campagne_mois.index,
                 values=campagne_mois.values,
-                marker=dict(colors=["#e74c3c", "#145A32", "#F4D03F", "#3498db", "#6E2C00", "#7f8c8d", "#27ae60"]),
+                marker=dict(colors=["#e74c3c", "#145A32", "#F4D03F", "#3498db", "#6E2C00", "#7f8c8d", "#27ae60", "#8e44ad"]),
                 hole=0.4,
-                textinfo='label+value+percent',  # ✅ Affiche nom + valeur + %
+                textinfo='label+percent+value',
                 hoverinfo='label+percent+value'
             )
         ])
