@@ -38,7 +38,7 @@ else:
     pic_realise = pd.Series(pd.to_numeric(df.iloc[2:14, 1], errors='coerce').fillna(0).astype(int).values, index=mois)
     pic_prevu = pd.Series(pd.to_numeric(df.iloc[2:14, 2], errors='coerce').fillna(0).astype(int).values, index=mois)
     campagnes = df.iloc[1, 7:14].tolist()
-    campagne_data = df.iloc2:14[1]()
+    campagne_data = df.iloc[2:14, 7:14]
     campagne_data.columns = campagnes
     campagne_data.index = mois
     ruptures = int(df.iloc[1, 16])
