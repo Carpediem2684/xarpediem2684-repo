@@ -39,7 +39,10 @@ if uap_selection == "4M":
     pic_realise = pd.Series(pd.to_numeric(df.iloc[2:14, 1], errors='coerce').fillna(0).astype(int).values, index=mois)
     pic_prevu = pd.Series(pd.to_numeric(df.iloc[2:14, 2], errors='coerce').fillna(0).astype(int).values, index=mois)
     ruptures = int(df.iloc[1, 16])
-    taux_adherence = float(df.iloc[1, 22]) * 100
+
+    # Taux d'adhérence avec vérification
+    raw_adherence = pd.to_numeric(df.iloc[1, 22], errors="coerce")
+    taux_adherence = (raw_adherence * 100) if pd.notna(raw_adherence) else 0
 
     st.markdown(f"<h4 style='color:white;'>Taux d'adhérence S-1 : {taux_adherence:.1f}%</h4>", unsafe_allow_html=True)
 
@@ -51,7 +54,7 @@ if uap_selection == "4M":
     # ✅ Camembert des campagnes
     st.markdown("### Répartition par campagne")
     campagnes = df.iloc[1, 7:14].tolist()
-    campagne_data = df.iloc[2:14, 7:14]
+    campagne_data = df.iloc2:14[1]()
     campagne_data.columns = campagnes
     campagne_data.index = mois
     campagne_mois = campagne_data.loc[mois_selectionne]
@@ -89,3 +92,9 @@ if uap_selection == "4M":
     fig_line.add_trace(go.Scatter(x=df_evol["Mois"], y=df_evol["PIC Prévu"], mode='lines+markers', name="PIC Prévu"))
     fig_line.update_layout(height=300, title="PIC mensuel", xaxis_title="Mois", yaxis_title="Surface (km²)")
     st.plotly_chart(fig_line, use_container_width=True)
+
+    # ✅ Heatmap des campagnes
+    st.markdown("### Heatmap des campagnes")
+    fig_heatmap = go.Figure(data=go.Heatmap(z=campagne_data.values, x=campagne_data.columns, y=campagne_data.index, colorscale='Viridis'))
+    fig_heatmap.update_layout(height=300)
+    st.plotly_chart(fig_heatmap, use_container_width=True)
