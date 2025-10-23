@@ -35,29 +35,29 @@ if uap_selection == "4M":
     df = pd.read_excel("Essai appli dashboard (1).xlsx", sheet_name="2025", engine="openpyxl", header=None)
 
     # KPI
-    mois = df.iloc[2:14, 0].tolist()
-    pic_realise = pd.Series(pd.to_numeric(df.iloc[2:14, 1], errors='coerce').fillna(0).astype(int).values, index=mois)
-    pic_prevu = pd.Series(pd.to_numeric(df.iloc[2:14, 2], errors='coerce').fillna(0).astype(int).values, index=mois)
-    ruptures = int(df.iloc[1, 16])
+mois = df.iloc[2:14, 0].tolist()
+pic_realise = pd.Series(pd.to_numeric(df.iloc[2:14, 1], errors='coerce').fillna(0).astype(int).values, index=mois)
+pic_prevu = pd.Series(pd.to_numeric(df.iloc[2:14, 2], errors='coerce').fillna(0).astype(int).values, index=mois)
+ruptures = int(df.iloc[1, 16])
 
-    # Taux d'adhérence avec vérification
-    raw_adherence = pd.to_numeric(df.iloc[1, 22], errors="coerce")
-    taux_adherence = (raw_adherence * 100) if pd.notna(raw_adherence) else 0
+# Taux d'adhérence avec vérification
+raw_adherence = pd.to_numeric(df.iloc[1, 22], errors="coerce")
+taux_adherence = (raw_adherence * 100) if pd.notna(raw_adherence) else 0
 
-    st.markdown(f"<h4 style='color:white;'>Taux d'adhérence S-1 : {taux_adherence:.1f}%</h4>", unsafe_allow_html=True)
+st.markdown(f"<h4 style='color:white;'>Taux d'adhérence S-1 : {taux_adherence:.1f}%</h4>", unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns(3)
-    col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} km²")
-    col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} km²")
-    col3.metric("Ruptures cette semaine", f"{ruptures}")
+col1, col2, col3 = st.columns(3)
+col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} km²")
+col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} km²")
+col3.metric("Ruptures cette semaine", f"{ruptures}")
 
-    # ✅ Camembert des campagnes
-    st.markdown("### Répartition par campagne")
-    campagnes = df.iloc[1, 7:14].tolist()
-    campagne_data = df.iloc[2:14, 7:14]()
-    campagne_data.columns = campagnes
-    campagne_data.index = mois
-    campagne_mois = campagne_data.loc[mois_selectionne]
+# ✅ Camembert des campagnes
+st.markdown("### Répartition par campagne")
+campagnes = df.iloc[1, 7:14].tolist()
+campagne_data = df.iloc[2:14, 7:14]  # ✅ Correction ici
+campagne_data.columns = campagnes
+campagne_data.index = mois
+campagne_mois = campagne_data.loc[mois_selectionne]
 
     fig_pie = go.Figure(data=[go.Pie(labels=campagne_mois.index, values=campagne_mois.values,
                                      marker=dict(colors=["#e74c3c", "#145A32", "#F4D03F", "#3498db", "#6E2C00", "#7f8c8d", "#27ae60"]),
