@@ -98,11 +98,14 @@ fig_dynamic = go.Figure(go.Indicator(
 ))
 st.plotly_chart(fig_dynamic, use_container_width=True)
 
-# Graphique camembert
+# Graphique camembert depuis colonnes F à N
+campagne_labels = df.iloc[1, 6:14].tolist()
+campagne_values = df[df.iloc[:, 0] == mois_selectionne].iloc[0, 6:14]
+campagne_values = pd.to_numeric(campagne_values, errors='coerce').fillna(0)
 fig_pie = go.Figure(data=[
-    go.Pie(labels=campagne_mois.index, values=campagne_mois.values, hole=0.4, textinfo='label+percent+value')
+    go.Pie(labels=campagne_labels, values=campagne_values, hole=0.4, textinfo='label+percent+value')
 ])
-fig_pie.update_layout(title="Répartition par campagne", height=400)
+fig_pie.update_layout(title="Répartition par campagne (F à N)", height=400)
 st.plotly_chart(fig_pie, use_container_width=True)
 
 # Graphique ligne PIC
