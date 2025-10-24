@@ -64,7 +64,7 @@ col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} km²")
 col3.metric("Ruptures cette semaine", f"{ruptures}")
 
 # Boutons horizontaux avec indicateurs
-st.markdown("### Campagnes à venir")
+st.markdown("### Campagnes restantes du mois")
 cols = st.columns(len(campagnes))
 for i, campagne in enumerate(campagnes):
     val = campagne_mois[campagne]
