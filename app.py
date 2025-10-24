@@ -60,12 +60,12 @@ if uap_selection == "4M":
     col3.markdown(f"<div class='metric-label'>Ruptures cette semaine</div>", unsafe_allow_html=True)
     col3.metric("", f"{ruptures}")
 
-    campagnes = df.iloc[1, 7:14].tolist()
-    campagne_data = df.iloc[2:14, 7:14]
-    campagne_data.columns = campagnes
-    campagne_data.index = mois
-    campagne_mois = campagne_data.loc[mois_selectionne]
-    campagne_mois["AUTRES"] = 80
+    # ✅ Lecture du tableau des campagnes à venir (Z2:AH14)
+    campagnes_avenir = df.iloc[1, 25:34].tolist()
+    campagne_avenir_data = df.iloc[2:14, 25:34]
+    campagne_avenir_data.columns = campagnes_avenir
+    campagne_avenir_data.index = mois
+    campagne_mois = campagne_avenir_data.loc[mois_selectionne]
 
     st.markdown("### Simulation des campagnes à venir")
     if "current_value" not in st.session_state:
@@ -98,6 +98,8 @@ if uap_selection == "4M":
                 st.session_state.current_value += val
             if st.session_state.current_value > pic_prevu[mois_selectionne]:
                 st.session_state.current_value = pic_prevu[mois_selectionne]
+
+    st.markdown(f"<p style='font-size:18px; font-weight:bold;'>Campagnes sélectionnées : {len(st.session_state.selected_campaigns)}</p>", unsafe_allow_html=True)
 
     fig_dynamic = go.Figure(go.Indicator(
         mode="gauge+number",
