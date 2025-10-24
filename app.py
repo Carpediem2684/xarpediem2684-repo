@@ -95,48 +95,45 @@ fig_pie = go.Figure(data=[
 fig_pie.update_layout(height=400, legend=dict(orientation="h", y=-0.1))
 st.plotly_chart(fig_pie, use_container_width=True)
 
-# ✅ Jauge interactive Engine / Torpedo séparée
+# ✅ Jauge interactive Engine / Torpedo
 st.markdown("### Jauge interactive")
 if "engine" not in st.session_state:
     st.session_state.engine = 45
 if "torpedo" not in st.session_state:
     st.session_state.torpedo = 20
 
-col_btn1, col_btn2 = st.columns(2)
-with col_btn1:
+col1, col2 = st.columns(2)
+with col1:
     if st.button("Allez plus vite"):
         st.session_state.engine = min(st.session_state.engine + 10, 280)
         st.session_state.torpedo = min(st.session_state.torpedo + 10, 280)
-with col_btn2:
+with col2:
     if st.button("Ralentissements"):
         st.session_state.engine = max(st.session_state.engine - 10, 0)
         st.session_state.torpedo = max(st.session_state.torpedo - 10, 0)
 
-col1, col2 = st.columns(2)
-with col1:
-    fig_engine = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=st.session_state.engine,
-        title={'text': "Engine"},
-        gauge={'axis': {'range': [0, 280]},
-               'bar': {'color': "blue"},
-               'steps': [
-                   {'range': [0, 200], 'color': "lightgreen"},
-                   {'range': [200, 250], 'color': "yellow"},
-                   {'range': [250, 280], 'color': "red"}]}
-    ))
-    st.plotly_chart(fig_engine, use_container_width=True)
-
-with col2:
-    fig_torpedo = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=st.session_state.torpedo,
-        title={'text': "Torpedo"},
-        gauge={'axis': {'range': [0, 280]},
-               'bar': {'color': "orange"},
-               'steps': [
-                   {'range': [0, 200], 'color': "lightgreen"},
-                   {'range': [200, 250], 'color': "yellow"},
-                   {'range': [250, 280], 'color': "red"}]}
-    ))
-    st.plotly_chart(fig_torpedo, use_container_width=True)
+fig = go.Figure()
+fig.add_trace(go.Indicator(
+    mode="gauge+number",
+    value=st.session_state.engine,
+    title={'text': "Engine"},
+    gauge={'axis': {'range': [0, 280]},
+           'bar': {'color': "blue"},
+           'steps': [
+               {'range': [0, 200], 'color': "lightgreen"},
+               {'range': [200, 250], 'color': "yellow"},
+               {'range': [250, 280], 'color': "red"}]}
+))
+fig.add_trace(go.Indicator(
+    mode="gauge+number",
+    value=st.session_state.torpedo,
+    title={'text': "Torpedo"},
+    gauge={'axis': {'range': [0, 280]},
+           'bar': {'color': "orange"},
+           'steps': [
+               {'range': [0, 200], 'color': "lightgreen"},
+               {'range': [200, 250], 'color': "yellow"},
+               {'range': [250, 280], 'color': "red"}]}
+))
+fig.update_layout(grid={'rows': 1, 'columns': 2}, height=300)
+st.plotly_chart(fig, use_container_width=True)
