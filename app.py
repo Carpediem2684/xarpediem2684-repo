@@ -23,6 +23,9 @@ st.markdown("""
         font-size: 22px !important;
         font-weight: bold !important;
     }
+    button {
+        font-weight: bold;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -64,87 +67,37 @@ if uap_selection == "4M":
     campagne_mois = campagne_data.loc[mois_selectionne]
     campagne_mois["AUTRES"] = 80
 
-    weekly_data = df.iloc[2:51, [21, 22]]
-    weekly_data.columns = ["Semaine", "Taux d'adhérence"]
-    weekly_data.dropna(inplace=True)
-    weekly_data["Taux d'adhérence"] = pd.to_numeric(weekly_data["Taux d'adhérence"], errors="coerce")
-    weekly_data["Taux d'adhérence"] = (weekly_data["Taux d'adhérence"] * 100).round(1)
-    weekly_data["Semaine"] = weekly_data["Semaine"].astype(int)
-
-    semaines_completes = list(range(1, 51))
-    colors = ["green" if val >= 85 else "red" for val in weekly_data["Taux d'adhérence"]]
-
-    st.markdown("### Répartition par campagne et évolution du taux d'adhérence")
-    col_gauche, col_droite = st.columns(2)
-
-    with col_gauche:
-        st.markdown("#### Répartition par campagne")
-        fig_pie = go.Figure(data=[
-            go.Pie(
-                labels=campagne_mois.index,
-                values=campagne_mois.values,
-                hole=0.4,
-                textinfo='label+percent+value',
-                hoverinfo='label+percent+value'
-            )
-        ])
-        fig_pie.update_layout(height=400, legend=dict(orientation="h", y=-0.1))
-        st.plotly_chart(fig_pie, use_container_width=True)
-
-    with col_droite:
-        st.markdown("#### Évolution hebdomadaire du taux d'adhérence")
-        fig_weekly = go.Figure()
-        fig_weekly.add_trace(go.Scatter(
-            x=weekly_data["Semaine"],
-            y=weekly_data["Taux d'adhérence"],
-            mode='markers+lines+text',
-            marker=dict(color=colors, size=10),
-            name="Taux d'adhérence",
-            text=[f"{val:.1f}%" for val in weekly_data["Taux d'adhérence"]],
-            textposition="top center"
-        ))
-        fig_weekly.add_trace(go.Scatter(
-            x=semaines_completes,
-            y=[85]*len(semaines_completes),
-            mode='lines',
-            name="Objectif",
-            line=dict(dash='dash', color='blue')
-        ))
-        fig_weekly.update_layout(
-            height=400,
-            xaxis_title="Semaine",
-            yaxis_title="% d'adhérence",
-            xaxis=dict(tickmode='array', tickvals=semaines_completes)
-        )
-        st.plotly_chart(fig_weekly, use_container_width=True)
-
-    st.markdown("### Évolution mensuelle du PIC")
-    df_evol = pd.DataFrame({"Mois": mois, "PIC Réalisé": pic_realise.values, "PIC Prévu": pic_prevu.values})
-    fig_line = go.Figure()
-    fig_line.add_trace(go.Scatter(x=df_evol["Mois"], y=df_evol["PIC Réalisé"], mode='lines+markers', name="PIC Réalisé"))
-    fig_line.add_trace(go.Scatter(x=df_evol["Mois"], y=df_evol["PIC Prévu"], mode='lines+markers', name="PIC Prévu"))
-    fig_line.update_layout(height=300, title="PIC mensuel", xaxis_title="Mois", yaxis_title="Surface (km²)")
-    st.plotly_chart(fig_line, use_container_width=True)
-
-    st.markdown("### Heatmap des campagnes")
-    fig_heatmap = go.Figure(data=go.Heatmap(z=campagne_data.values, x=campagne_data.columns, y=campagne_data.index, colorscale='Viridis'))
-    fig_heatmap.update_layout(height=300)
-    st.plotly_chart(fig_heatmap, use_container_width=True)
-
-    # ✅ Nouvelle jauge interactive basée sur PIC Réalisé et PIC Prévu
     st.markdown("### Simulation des campagnes à venir")
     if "current_value" not in st.session_state:
         st.session_state.current_value = pic_realise[mois_selectionne]
+    if "selected_campaigns" not in st.session_state:
+        st.session_state.selected_campaigns = []
 
     if st.button("Instant présent"):
         st.session_state.current_value = pic_realise[mois_selectionne]
+        st.session_state.selected_campaigns = []
 
-    for campagne, val in campagne_mois.items():
+    cols = st.columns(len(campagne_mois))
+    for i, (campagne, val) in enumerate(campagne_mois.items()):
         if val > 0:
-            if st.button(campagne):
+            color = "red" if campagne in st.session_state.selected_campaigns else "green"
+        else:
+            color = "gray"
+        button_html = f"""
+        <button style='background-color:{color}; color:white; padding:8px; border:none; border-radius:5px; width:100%;'>
+            {campagne}
+        </button>
+        """
+        cols[i].markdown(button_html, unsafe_allow_html=True)
+        if cols[i].button(campagne):
+            if campagne in st.session_state.selected_campaigns:
+                st.session_state.selected_campaigns.remove(campagne)
+                st.session_state.current_value -= val
+            else:
+                st.session_state.selected_campaigns.append(campagne)
                 st.session_state.current_value += val
-                if st.session_state.current_value > pic_prevu[mois_selectionne]:
-                    st.session_state.current_value = pic_prevu[mois_selectionne]
+            if st.session_state.current_value > pic_prevu[mois_selectionne]:
+                st.session_state.current_value = pic_prevu[mois_selectionne]
 
     fig_dynamic = go.Figure(go.Indicator(
         mode="gauge+number",
