@@ -86,23 +86,3 @@ fig_dynamic = go.Figure(go.Indicator(
     }
 ))
 st.plotly_chart(fig_dynamic, use_container_width=True)
-
-# Graphique camembert
-fig_pie = go.Figure(data=[
-    go.Pie(labels=campagne_mois.index, values=campagne_mois.values, hole=0.4, textinfo='label+percent+value')
-])
-fig_pie.update_layout(title="Répartition par campagne", height=400)
-st.plotly_chart(fig_pie, use_container_width=True)
-
-# Graphique ligne PIC
-df_evol = pd.DataFrame({"Mois": mois, "PIC Réalisé": pic_realise.values, "PIC Prévu": pic_prevu.values})
-fig_line = go.Figure()
-fig_line.add_trace(go.Scatter(x=df_evol["Mois"], y=df_evol["PIC Réalisé"], mode='lines+markers', name="PIC Réalisé"))
-fig_line.add_trace(go.Scatter(x=df_evol["Mois"], y=df_evol["PIC Prévu"], mode='lines+markers', name="PIC Prévu"))
-fig_line.update_layout(title="Évolution mensuelle du PIC", height=300, xaxis_title="Mois", yaxis_title="Surface (km²)")
-st.plotly_chart(fig_line, use_container_width=True)
-
-# Heatmap des campagnes
-fig_heatmap = go.Figure(data=go.Heatmap(z=campagne_data.values, x=campagne_data.columns, y=campagne_data.index, colorscale='Viridis'))
-fig_heatmap.update_layout(title="Heatmap des campagnes", height=300)
-st.plotly_chart(fig_heatmap, use_container_width=True)
