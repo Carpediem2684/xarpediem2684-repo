@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -5,7 +6,6 @@ from datetime import datetime
 
 st.set_page_config(page_title='Dashboard PIC', layout='wide')
 
-# CSS pour fond dégradé et style des textes
 st.markdown("""
     <style>
     body {
@@ -26,7 +26,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Sidebar
 st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Logo_Gerflor.svg/2560px-Logo_Gerflor.svg.png", width=150)
 st.sidebar.title("Sélection UAP")
 uap_selection = st.sidebar.selectbox("Choisir une UAP", ["4M", "2M", "P2000", "KLAM"])
@@ -50,28 +49,6 @@ if uap_selection == "4M":
 
     st.markdown(f"<h4 style='color:white;'>Taux d'adhérence S-1 : {taux_adherence:.1f}%</h4>", unsafe_allow_html=True)
 
-    # ✅ Gauge Plotly pour taux d'adhérence
-    fig_gauge = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=taux_adherence,
-        title={'text': "Taux d'adhérence S-1"},
-        gauge={
-            'axis': {'range': [None, 100]},
-            'bar': {'color': "darkblue"},
-            'steps': [
-                {'range': [0, 85], 'color': "red"},
-                {'range': [85, 100], 'color': "green"}
-            ],
-            'threshold': {
-                'line': {'color': "blue", 'width': 4},
-                'thickness': 0.75,
-                'value': 85
-            }
-        }
-    ))
-    st.plotly_chart(fig_gauge, use_container_width=True)
-
-    # ✅ Métriques PIC
     col1, col2, col3 = st.columns(3)
     col1.markdown(f"<div class='metric-label'>PIC Réalisé</div>", unsafe_allow_html=True)
     col1.metric("", f"{pic_realise[mois_selectionne]} km²")
@@ -80,7 +57,6 @@ if uap_selection == "4M":
     col3.markdown(f"<div class='metric-label'>Ruptures cette semaine</div>", unsafe_allow_html=True)
     col3.metric("", f"{ruptures}")
 
-    # ✅ Répartition par campagne
     campagnes = df.iloc[1, 7:14].tolist()
     campagne_data = df.iloc[2:14, 7:14]
     campagne_data.columns = campagnes
@@ -107,7 +83,6 @@ if uap_selection == "4M":
             go.Pie(
                 labels=campagne_mois.index,
                 values=campagne_mois.values,
-                marker=dict(colors=["#e74c3c", "#145A32", "#F4D03F", "#3498db", "#6E2C00", "#7f8c8d", "#27ae60", "#8e44ad"]),
                 hole=0.4,
                 textinfo='label+percent+value',
                 hoverinfo='label+percent+value'
@@ -143,7 +118,6 @@ if uap_selection == "4M":
         )
         st.plotly_chart(fig_weekly, use_container_width=True)
 
-    # ✅ Évolution mensuelle
     st.markdown("### Évolution mensuelle du PIC")
     df_evol = pd.DataFrame({"Mois": mois, "PIC Réalisé": pic_realise.values, "PIC Prévu": pic_prevu.values})
     fig_line = go.Figure()
@@ -152,54 +126,42 @@ if uap_selection == "4M":
     fig_line.update_layout(height=300, title="PIC mensuel", xaxis_title="Mois", yaxis_title="Surface (km²)")
     st.plotly_chart(fig_line, use_container_width=True)
 
-    # ✅ Heatmap
     st.markdown("### Heatmap des campagnes")
     fig_heatmap = go.Figure(data=go.Heatmap(z=campagne_data.values, x=campagne_data.columns, y=campagne_data.index, colorscale='Viridis'))
     fig_heatmap.update_layout(height=300)
     st.plotly_chart(fig_heatmap, use_container_width=True)
 
-    # ✅ Jauge interactive Engine/Torpedo
-    st.markdown("### Jauge interactive")
-    if "engine" not in st.session_state:
-        st.session_state.engine = 45
-    if "torpedo" not in st.session_state:
-        st.session_state.torpedo = 20
+    # ✅ Nouvelle jauge interactive basée sur PIC Réalisé et PIC Prévu
+    st.markdown("### Simulation des campagnes à venir")
+    if "current_value" not in st.session_state:
+        st.session_state.current_value = pic_realise[mois_selectionne]
 
-    col_btn1, col_btn2 = st.columns(2)
-    with col_btn1:
-        if st.button("Allez plus vite"):
-            st.session_state.engine = min(st.session_state.engine + 10, 280)
-            st.session_state.torpedo = min(st.session_state.torpedo + 10, 280)
-    with col_btn2:
-        if st.button("Ralentissements"):
-            st.session_state.engine = max(st.session_state.engine - 10, 0)
-            st.session_state.torpedo = max(st.session_state.torpedo - 10, 0)
+    if st.button("Instant présent"):
+        st.session_state.current_value = pic_realise[mois_selectionne]
 
-    col1, col2 = st.columns(2)
-    with col1:
-        fig_engine = go.Figure(go.Indicator(
-            mode="gauge+number",
-            value=st.session_state.engine,
-            title={'text': "Engine"},
-            gauge={'axis': {'range': [0, 280]},
-                   'bar': {'color': "blue"},
-                   'steps': [
-                       {'range': [0, 200], 'color': "lightgreen"},
-                       {'range': [200, 250], 'color': "yellow"},
-                       {'range': [250, 280], 'color': "red"}]}
-        ))
-        st.plotly_chart(fig_engine, use_container_width=True)
+    for campagne, val in campagne_mois.items():
+        if val > 0:
+            if st.button(campagne):
+                st.session_state.current_value += val
+                if st.session_state.current_value > pic_prevu[mois_selectionne]:
+                    st.session_state.current_value = pic_prevu[mois_selectionne]
 
-    with col2:
-        fig_torpedo = go.Figure(go.Indicator(
-            mode="gauge+number",
-            value=st.session_state.torpedo,
-            title={'text': "Torpedo"},
-            gauge={'axis': {'range': [0, 280]},
-                   'bar': {'color': "orange"},
-                   'steps': [
-                       {'range': [0, 200], 'color': "lightgreen"},
-                       {'range': [200, 250], 'color': "yellow"},
-                       {'range': [250, 280], 'color': "red"}]}
-        ))
-        st.plotly_chart(fig_torpedo, use_container_width=True)
+    fig_dynamic = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=st.session_state.current_value,
+        title={'text': f"Progression PIC ({mois_selectionne})"},
+        gauge={
+            'axis': {'range': [0, pic_prevu[mois_selectionne]]},
+            'bar': {'color': "darkblue"},
+            'steps': [
+                {'range': [0, pic_prevu[mois_selectionne]*0.85], 'color': "lightgreen"},
+                {'range': [pic_prevu[mois_selectionne]*0.85, pic_prevu[mois_selectionne]], 'color': "yellow"}
+            ],
+            'threshold': {
+                'line': {'color': "red", 'width': 4},
+                'thickness': 0.75,
+                'value': pic_prevu[mois_selectionne]
+            }
+        }
+    ))
+    st.plotly_chart(fig_dynamic, use_container_width=True)
