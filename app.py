@@ -130,40 +130,10 @@ fig_line.add_trace(go.Scatter(x=df_evol["Mois"], y=df_evol["PIC Prévu"], mode='
 fig_line.update_layout(title="Évolution mensuelle du PIC", height=300, xaxis_title="Mois", yaxis_title="Surface (km²)")
 st.plotly_chart(fig_line, use_container_width=True)
 
-
-# Heatmap des campagnes (améliorée)
-fig_heatmap = go.Figure(data=go.Heatmap(
-    z=campagne_data.values,
-    x=campagne_data.columns,
-    y=campagne_data.index,
-    colorscale='Viridis',
-    colorbar=dict(title="Valeur"),
-    zmin=0,
-    zmax=campagne_data.values.max(),
-    hoverongaps=False
-))
-
-annotations = []
-for i, mois_val in enumerate(campagne_data.index):
-    for j, campagne_val in enumerate(campagne_data.columns):
-        value = campagne_data.iloc[i, j]
-        annotations.append(dict(
-            x=campagne_val,
-            y=mois_val,
-            text=str(value),
-            showarrow=False,
-            font=dict(color="white" if value < campagne_data.values.max()/2 else "black", size=10)
-        ))
-
-fig_heatmap.update_layout(
-    title="Heatmap des campagnes (améliorée)",
-    height=600,
-    annotations=annotations,
-    xaxis=dict(title="Campagnes", tickangle=-45),
-    yaxis=dict(title="Mois")
-)
+# Heatmap des campagnes
+fig_heatmap = go.Figure(data=go.Heatmap(z=campagne_data.values, x=campagne_data.columns, y=campagne_data.index, colorscale='Viridis'))
+fig_heatmap.update_layout(title="Heatmap des campagnes", height=300)
 st.plotly_chart(fig_heatmap, use_container_width=True)
-
 
 # Graphique hebdomadaire
 fig_weekly = go.Figure()
