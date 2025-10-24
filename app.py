@@ -25,6 +25,11 @@ st.markdown("""
     }
     button {
         font-weight: bold;
+        transition: 0.3s;
+    }
+    button:hover {
+        box-shadow: 0px 0px 10px #fff;
+        transform: scale(1.05);
     }
     </style>
 """, unsafe_allow_html=True)
@@ -79,12 +84,15 @@ if uap_selection == "4M":
 
     cols = st.columns(len(campagne_mois))
     for i, (campagne, val) in enumerate(campagne_mois.items()):
+        val = pd.to_numeric(val, errors="coerce")
+        if pd.isna(val):
+            val = 0
         if val > 0:
             color = "red" if campagne in st.session_state.selected_campaigns else "green"
         else:
             color = "gray"
         button_html = f"""
-        <button style='background-color:{color}; color:white; padding:8px; border:none; border-radius:5px; width:100%;'>
+        <button style='background-color:{color}; color:white; padding:8px; border:none; border-radius:8px; width:100%;'>
             {campagne}
         </button>
         """
