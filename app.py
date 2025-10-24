@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -155,3 +154,50 @@ if uap_selection == "4M":
     fig_heatmap = go.Figure(data=go.Heatmap(z=campagne_data.values, x=campagne_data.columns, y=campagne_data.index, colorscale='Viridis'))
     fig_heatmap.update_layout(height=300)
     st.plotly_chart(fig_heatmap, use_container_width=True)
+
+    # ✅ Ajout de la jauge interactive Engine/Torpedo
+    st.markdown("### Jauge interactive")
+    if "engine" not in st.session_state:
+        st.session_state.engine = 45
+    if "torpedo" not in st.session_state:
+        st.session_state.torpedo = 20
+
+    col_btn1, col_btn2 = st.columns(2)
+    with col_btn1:
+        if st.button("Allez plus vite"):
+            st.session_state.engine = min(st.session_state.engine + 10, 280)
+            st.session_state.torpedo = min(st.session_state.torpedo + 10, 280)
+    with col_btn2:
+        if st.button("Ralentissements"):
+            st.session_state.engine = max(st.session_state.engine - 10, 0)
+            st.session_state.torpedo = max(st.session_state.torpedo - 10, 0)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        fig_engine = go.Figure(go.Indicator(
+            mode="gauge+number",
+            value=st.session_state.engine,
+            title={'text': "Engine"},
+            gauge={'axis': {'range': [0, 280]},
+                   'bar': {'color': "blue"},
+                   'steps': [
+                       {'range': [0, 200], 'color': "lightgreen"},
+                       {'range': [200, 250], 'color': "yellow"},
+                       {'range': [250, 280], 'color': "red"}]}
+        ))
+        st.plotly_chart(fig_engine, use_container_width=True)
+
+    with col2:
+        fig_torpedo = go.Figure(go.Indicator(
+            mode="gauge+number",
+            value=st.session_state.torpedo,
+            title={'text': "Torpedo"},
+            gauge={'axis': {'range': [0, 280]},
+                   'bar': {'color': "orange"},
+                   'steps': [
+                       {'range': [0, 200], 'color': "lightgreen"},
+                       {'range': [200, 250], 'color': "yellow"},
+                       {'range': [250, 280], 'color': "red"}]}
+        ))
+        st.plotly_chart(fig_torpedo, use_container_width=True)
+``
