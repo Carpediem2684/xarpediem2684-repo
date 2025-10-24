@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -46,11 +47,6 @@ if "current_value" not in st.session_state or st.session_state.get("mois_selecti
     st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
     st.session_state.mois_selectionne = mois_selectionne
 
-# Bouton reset
-if st.button("Instant présent"):
-    st.session_state.current_value = pic_realise[mois_selectionne]
-    st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
-
 # Titre et date
 st.markdown(f"<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - {uap_selection}</h1>", unsafe_allow_html=True)
 date_du_jour = datetime.today().strftime('%d/%m/%Y')
@@ -65,13 +61,20 @@ col3.metric("Ruptures cette semaine", f"{ruptures}")
 
 # Boutons horizontaux avec indicateurs
 st.markdown("### Campagnes restantes du mois")
-cols = st.columns(len(campagnes))
+cols = st.columns(len(campagnes) + 1)
+
+# Bouton Instant T à gauche
+if cols[0].button("🔄 Instant T"):
+    st.session_state.current_value = pic_realise[mois_selectionne]
+    st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
+
+# Boutons des campagnes
 for i, campagne in enumerate(campagnes):
     val = campagne_mois[campagne]
     if val > 0:
         clicked = st.session_state.campagne_clicks[campagne]
         indicator = "🟢" if not clicked else "🔴"
-        if cols[i].button(f"{indicator} {campagne}"):
+        if cols[i + 1].button(f"{indicator} {campagne}"):
             st.session_state.campagne_clicks[campagne] = True
             st.session_state.current_value += val
             if st.session_state.current_value > pic_prevu[mois_selectionne]:
@@ -98,14 +101,25 @@ fig_dynamic = go.Figure(go.Indicator(
 ))
 st.plotly_chart(fig_dynamic, use_container_width=True)
 
-# Graphique camembert depuis colonnes F à N
+# Graphique camembert avec couleurs personnalisées
 campagne_labels = df.iloc[1, 6:14].tolist()
 campagne_values = df[df.iloc[:, 0] == mois_selectionne].iloc[0, 6:14]
 campagne_values = pd.to_numeric(campagne_values, errors='coerce').fillna(0)
+couleurs_personnalisees = {
+    "PRIMETEX": "yellow",
+    "TEXLINE": "green",
+    "NERA": "blue",
+    "MOUSSE": "red",
+    "TARABUS": "lightgreen",
+    "SPORISOL": "lightgrey",
+    "START": "grey",
+    "TMAX": "brown"
+}
+colors = [couleurs_personnalisees.get(label, "white") for label in campagne_labels]
 fig_pie = go.Figure(data=[
-    go.Pie(labels=campagne_labels, values=campagne_values, hole=0.4, textinfo='label+percent+value')
+    go.Pie(labels=campagne_labels, values=campagne_values, hole=0.4, textinfo='label+percent+value', marker=dict(colors=colors))
 ])
-fig_pie.update_layout(title="Répartition par campagne (F à N)", height=400)
+fig_pie.update_layout(title="Répartition par campagne", height=400)
 st.plotly_chart(fig_pie, use_container_width=True)
 
 # Graphique ligne PIC
