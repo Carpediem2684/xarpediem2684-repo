@@ -5,8 +5,9 @@ from datetime import datetime
 
 st.set_page_config(page_title='Dashboard PIC', layout='wide')
 
-# Chargement des donnes
-df = pd.read_excel("Essai appli dashboard (1).xlsx", sheet_name="2025", engine="openpyxl", header=None)
+# Chargement des données
+file_path = "Essai appli dashboard (1).xlsx"
+df = pd.read_excel(file_path, sheet_name="2025", engine="openpyxl", header=None)
 
 # Initialisation
 mois = df.iloc[2:14, 0].tolist()
@@ -17,59 +18,59 @@ ruptures = int(df.iloc[1, 16])
 raw_adherence = pd.to_numeric(df.iloc[1, 22], errors="coerce")
 taux_adherence = (raw_adherence * 100) if pd.notna(raw_adherence) else 0
 
-# Se9lection utilisateur
+# Sélection utilisateur
 st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Logo_Gerflor.svg/2560px-Logo_Gerflor.svg.png", width=150)
-st.sidebar.title("Se9lection UAP")
+st.sidebar.title("Sélection UAP")
 uap_selection = st.sidebar.selectbox("Choisir une UAP", ["4M", "2M", "P2000", "KLAM"])
 mois_selectionne = st.sidebar.selectbox("Choisir un mois", mois)
 
-# Titre et date
-st.markdown(f"<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - {uap_selection}</h1>", unsafe_allow_html=True)
-date_du_jour = datetime.today().strftime('%d/%m/%Y')
-st.markdown(f"<p style='text-align:right; font-size:16px; font-weight:bold;'>Date du jour : {date_du_jour}</p>", unsafe_allow_html=True)
-st.markdown(f"<h4 style='color:white;'>Taux d'adhe9rence S-1 : {taux_adherence:.1f}%</h4>", unsafe_allow_html=True)
-
-# Affichage des me9triques
-col1, col2, col3 = st.columns(3)
-col1.metric("PIC Re9alise9", f"{pic_realise[mois_selectionne]} kmb2")
-col2.metric("PIC Pre9vu", f"{pic_prevu[mois_selectionne]} kmb2")
-col3.metric("Ruptures cette semaine", f"{ruptures}")
-
-# Donne9es campagnes
+# Données campagnes
 campagne_data = df.iloc[2:14, 25:33]
 campagne_data.columns = campagnes
 campagne_data.index = mois
 campagne_mois = campagne_data.loc[mois_selectionne].apply(pd.to_numeric, errors='coerce').fillna(0)
 
-# Donne9es hebdomadaires
+# Données hebdomadaires
 weekly_data = df.iloc[2:51, [21, 22]]
-weekly_data.columns = ["Semaine", "Taux d'adhe9rence"]
+weekly_data.columns = ["Semaine", "Taux d'adhérence"]
 weekly_data.dropna(inplace=True)
-weekly_data["Taux d'adhe9rence"] = pd.to_numeric(weekly_data["Taux d'adhe9rence"], errors="coerce")
-weekly_data["Taux d'adhe9rence"] = (weekly_data["Taux d'adhe9rence"] * 100).round(1)
+weekly_data["Taux d'adhérence"] = pd.to_numeric(weekly_data["Taux d'adhérence"], errors="coerce")
+weekly_data["Taux d'adhérence"] = (weekly_data["Taux d'adhérence"] * 100).round(1)
 weekly_data["Semaine"] = weekly_data["Semaine"].astype(int)
 semaines_completes = list(range(1, 51))
-colors = ["green" if val >= 85 else "red" for val in weekly_data["Taux d'adhe9rence"]]
+colors = ["green" if val >= 85 else "red" for val in weekly_data["Taux d'adhérence"]]
 
 # Initialisation session
-if "current_value" not in st.session_state:
+if "current_value" not in st.session_state or st.session_state.get("mois_selectionne") != mois_selectionne:
     st.session_state.current_value = pic_realise[mois_selectionne]
-if "campagne_clicks" not in st.session_state:
     st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
+    st.session_state.mois_selectionne = mois_selectionne
 
 # Bouton reset
-if st.button("Instant pre9sent"):
+if st.button("Instant présent"):
     st.session_state.current_value = pic_realise[mois_selectionne]
     st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
 
+# Titre et date
+st.markdown(f"<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - {uap_selection}</h1>", unsafe_allow_html=True)
+date_du_jour = datetime.today().strftime('%d/%m/%Y')
+st.markdown(f"<p style='text-align:right; font-size:16px; font-weight:bold;'>Date du jour : {date_du_jour}</p>", unsafe_allow_html=True)
+st.markdown(f"<h4 style='color:white;'>Taux d'adhérence S-1 : {taux_adherence:.1f}%</h4>", unsafe_allow_html=True)
+
+# Affichage des métriques
+col1, col2, col3 = st.columns(3)
+col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} km²")
+col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} km²")
+col3.metric("Ruptures cette semaine", f"{ruptures}")
+
 # Boutons horizontaux avec indicateurs
-st.markdown("### Campagnes e0 venir")
+st.markdown("### Campagnes à venir")
 cols = st.columns(len(campagnes))
 for i, campagne in enumerate(campagnes):
     val = campagne_mois[campagne]
     if val > 0:
         clicked = st.session_state.campagne_clicks[campagne]
-        indicator = "F7E2" if not clicked else "F534"
+        indicator = "🟢" if not clicked else "🔴"
         if cols[i].button(f"{indicator} {campagne}"):
             st.session_state.campagne_clicks[campagne] = True
             st.session_state.current_value += val
@@ -101,15 +102,15 @@ st.plotly_chart(fig_dynamic, use_container_width=True)
 fig_pie = go.Figure(data=[
     go.Pie(labels=campagne_mois.index, values=campagne_mois.values, hole=0.4, textinfo='label+percent+value')
 ])
-fig_pie.update_layout(title="Re9partition par campagne", height=400)
+fig_pie.update_layout(title="Répartition par campagne", height=400)
 st.plotly_chart(fig_pie, use_container_width=True)
 
 # Graphique ligne PIC
-df_evol = pd.DataFrame({"Mois": mois, "PIC Re9alise9": pic_realise.values, "PIC Pre9vu": pic_prevu.values})
+df_evol = pd.DataFrame({"Mois": mois, "PIC Réalisé": pic_realise.values, "PIC Prévu": pic_prevu.values})
 fig_line = go.Figure()
-fig_line.add_trace(go.Scatter(x=df_evol["Mois"], y=df_evol["PIC Re9alise9"], mode='lines+markers', name="PIC Re9alise9"))
-fig_line.add_trace(go.Scatter(x=df_evol["Mois"], y=df_evol["PIC Pre9vu"], mode='lines+markers', name="PIC Pre9vu"))
-fig_line.update_layout(title="c9volution mensuelle du PIC", height=300, xaxis_title="Mois", yaxis_title="Surface (kmb2)")
+fig_line.add_trace(go.Scatter(x=df_evol["Mois"], y=df_evol["PIC Réalisé"], mode='lines+markers', name="PIC Réalisé"))
+fig_line.add_trace(go.Scatter(x=df_evol["Mois"], y=df_evol["PIC Prévu"], mode='lines+markers', name="PIC Prévu"))
+fig_line.update_layout(title="Évolution mensuelle du PIC", height=300, xaxis_title="Mois", yaxis_title="Surface (km²)")
 st.plotly_chart(fig_line, use_container_width=True)
 
 # Heatmap des campagnes
@@ -121,11 +122,11 @@ st.plotly_chart(fig_heatmap, use_container_width=True)
 fig_weekly = go.Figure()
 fig_weekly.add_trace(go.Scatter(
     x=weekly_data["Semaine"],
-    y=weekly_data["Taux d'adhe9rence"],
+    y=weekly_data["Taux d'adhérence"],
     mode='markers+lines+text',
     marker=dict(color=colors, size=10),
-    name="Taux d'adhe9rence",
-    text=[f"{val:.1f}%" for val in weekly_data["Taux d'adhe9rence"]],
+    name="Taux d'adhérence",
+    text=[f"{val:.1f}%" for val in weekly_data["Taux d'adhérence"]],
     textposition="top center"
 ))
 fig_weekly.add_trace(go.Scatter(
@@ -135,5 +136,5 @@ fig_weekly.add_trace(go.Scatter(
     name="Objectif",
     line=dict(dash='dash', color='blue')
 ))
-fig_weekly.update_layout(title="c9volution hebdomadaire du taux d'adhe9rence", height=400, xaxis_title="Semaine", yaxis_title="% d'adhe9rence")
+fig_weekly.update_layout(title="Évolution hebdomadaire du taux d'adhérence", height=400, xaxis_title="Semaine", yaxis_title="% d'adhérence")
 st.plotly_chart(fig_weekly, use_container_width=True)
