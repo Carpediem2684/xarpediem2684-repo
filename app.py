@@ -50,7 +50,7 @@ if uap_selection == "4M":
 
     st.markdown(f"<h4 style='color:white;'>Taux d'adhérence S-1 : {taux_adherence:.1f}%</h4>", unsafe_allow_html=True)
 
-    # ✅ Ajout du graphique gauge Plotly
+    # ✅ Gauge Plotly pour taux d'adhérence
     fig_gauge = go.Figure(go.Indicator(
         mode="gauge+number",
         value=taux_adherence,
@@ -71,6 +71,7 @@ if uap_selection == "4M":
     ))
     st.plotly_chart(fig_gauge, use_container_width=True)
 
+    # ✅ Métriques PIC
     col1, col2, col3 = st.columns(3)
     col1.markdown(f"<div class='metric-label'>PIC Réalisé</div>", unsafe_allow_html=True)
     col1.metric("", f"{pic_realise[mois_selectionne]} km²")
@@ -79,12 +80,12 @@ if uap_selection == "4M":
     col3.markdown(f"<div class='metric-label'>Ruptures cette semaine</div>", unsafe_allow_html=True)
     col3.metric("", f"{ruptures}")
 
+    # ✅ Répartition par campagne
     campagnes = df.iloc[1, 7:14].tolist()
     campagne_data = df.iloc[2:14, 7:14]
     campagne_data.columns = campagnes
     campagne_data.index = mois
     campagne_mois = campagne_data.loc[mois_selectionne]
-
     campagne_mois["AUTRES"] = 80
 
     weekly_data = df.iloc[2:51, [21, 22]]
@@ -142,6 +143,7 @@ if uap_selection == "4M":
         )
         st.plotly_chart(fig_weekly, use_container_width=True)
 
+    # ✅ Évolution mensuelle
     st.markdown("### Évolution mensuelle du PIC")
     df_evol = pd.DataFrame({"Mois": mois, "PIC Réalisé": pic_realise.values, "PIC Prévu": pic_prevu.values})
     fig_line = go.Figure()
@@ -150,12 +152,13 @@ if uap_selection == "4M":
     fig_line.update_layout(height=300, title="PIC mensuel", xaxis_title="Mois", yaxis_title="Surface (km²)")
     st.plotly_chart(fig_line, use_container_width=True)
 
+    # ✅ Heatmap
     st.markdown("### Heatmap des campagnes")
     fig_heatmap = go.Figure(data=go.Heatmap(z=campagne_data.values, x=campagne_data.columns, y=campagne_data.index, colorscale='Viridis'))
     fig_heatmap.update_layout(height=300)
     st.plotly_chart(fig_heatmap, use_container_width=True)
 
-    # ✅ Ajout de la jauge interactive Engine/Torpedo
+    # ✅ Jauge interactive Engine/Torpedo
     st.markdown("### Jauge interactive")
     if "engine" not in st.session_state:
         st.session_state.engine = 45
@@ -200,4 +203,3 @@ if uap_selection == "4M":
                        {'range': [250, 280], 'color': "red"}]}
         ))
         st.plotly_chart(fig_torpedo, use_container_width=True)
-``
