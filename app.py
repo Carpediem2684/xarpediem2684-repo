@@ -25,11 +25,6 @@ st.markdown("""
     }
     button {
         font-weight: bold;
-        transition: 0.3s;
-    }
-    button:hover {
-        box-shadow: 0px 0px 10px #fff;
-        transform: scale(1.05);
     }
     </style>
 """, unsafe_allow_html=True)
@@ -65,12 +60,12 @@ if uap_selection == "4M":
     col3.markdown(f"<div class='metric-label'>Ruptures cette semaine</div>", unsafe_allow_html=True)
     col3.metric("", f"{ruptures}")
 
-    # ✅ Lecture du tableau des campagnes à venir (Z2:AH14)
-    campagnes_avenir = df.iloc[1, 25:34].tolist()
-    campagne_avenir_data = df.iloc[2:14, 25:34]
-    campagne_avenir_data.columns = campagnes_avenir
-    campagne_avenir_data.index = mois
-    campagne_mois = campagne_avenir_data.loc[mois_selectionne]
+    campagnes = df.iloc[1, 7:14].tolist()
+    campagne_data = df.iloc[2:14, 7:14]
+    campagne_data.columns = campagnes
+    campagne_data.index = mois
+    campagne_mois = campagne_data.loc[mois_selectionne]
+    campagne_mois["AUTRES"] = 80
 
     st.markdown("### Simulation des campagnes à venir")
     if "current_value" not in st.session_state:
@@ -84,15 +79,12 @@ if uap_selection == "4M":
 
     cols = st.columns(len(campagne_mois))
     for i, (campagne, val) in enumerate(campagne_mois.items()):
-        val = pd.to_numeric(val, errors="coerce")
-        if pd.isna(val):
-            val = 0
         if val > 0:
             color = "red" if campagne in st.session_state.selected_campaigns else "green"
         else:
             color = "gray"
         button_html = f"""
-        <button style='background-color:{color}; color:white; padding:8px; border:none; border-radius:8px; width:100%;'>
+        <button style='background-color:{color}; color:white; padding:8px; border:none; border-radius:5px; width:100%;'>
             {campagne}
         </button>
         """
@@ -106,8 +98,6 @@ if uap_selection == "4M":
                 st.session_state.current_value += val
             if st.session_state.current_value > pic_prevu[mois_selectionne]:
                 st.session_state.current_value = pic_prevu[mois_selectionne]
-
-    st.markdown(f"<p style='font-size:18px; font-weight:bold;'>Campagnes sélectionnées : {len(st.session_state.selected_campaigns)}</p>", unsafe_allow_html=True)
 
     fig_dynamic = go.Figure(go.Indicator(
         mode="gauge+number",
