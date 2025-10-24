@@ -51,6 +51,27 @@ if uap_selection == "4M":
 
     st.markdown(f"<h4 style='color:white;'>Taux d'adhérence S-1 : {taux_adherence:.1f}%</h4>", unsafe_allow_html=True)
 
+    # ✅ Ajout du graphique gauge Plotly
+    fig_gauge = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=taux_adherence,
+        title={'text': "Taux d'adhérence S-1"},
+        gauge={
+            'axis': {'range': [None, 100]},
+            'bar': {'color': "darkblue"},
+            'steps': [
+                {'range': [0, 85], 'color': "red"},
+                {'range': [85, 100], 'color': "green"}
+            ],
+            'threshold': {
+                'line': {'color': "blue", 'width': 4},
+                'thickness': 0.75,
+                'value': 85
+            }
+        }
+    ))
+    st.plotly_chart(fig_gauge, use_container_width=True)
+
     col1, col2, col3 = st.columns(3)
     col1.markdown(f"<div class='metric-label'>PIC Réalisé</div>", unsafe_allow_html=True)
     col1.metric("", f"{pic_realise[mois_selectionne]} km²")
@@ -65,7 +86,6 @@ if uap_selection == "4M":
     campagne_data.index = mois
     campagne_mois = campagne_data.loc[mois_selectionne]
 
-    # ✅ Ajout de la catégorie AUTRES à 80 m²
     campagne_mois["AUTRES"] = 80
 
     weekly_data = df.iloc[2:51, [21, 22]]
