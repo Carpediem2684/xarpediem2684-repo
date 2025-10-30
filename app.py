@@ -57,6 +57,7 @@ col1, col2, col3 = st.columns(3)
 col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} km²")
 col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} km²")
 col3.metric("Ruptures cette semaine", f"{ruptures}")
+col4.metric("Taux d'adhérence S-1", f"{taux_adherence:.1f}%")
 
 # Camembert avec couleurs personnalisées
 campagne_labels = df.iloc[1, 6:14].tolist()
