@@ -53,7 +53,7 @@ st.markdown(f"<p style='text-align:right; font-size:16px; font-weight:bold;'>Dat
 st.markdown(f"<h4 style='color:white;'>Taux d'adhérence S-1 : {taux_adherence:.1f}%</h4>", unsafe_allow_html=True)
 
 # Affichage des métriques
-col1, col2, col3 = st.columns(4)
+col1, col2, col3, col4 = st.columns(4)
 col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} km²")
 col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} km²")
 col3.metric("Ruptures cette semaine", f"{ruptures}")
