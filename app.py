@@ -117,7 +117,35 @@ fig_pie = go.Figure(data=[
     go.Pie(labels=campagne_labels, values=campagne_values, hole=0.4, textinfo='label+percent+value', marker=dict(colors=colors_pie))
 ])
 fig_pie.update_layout(title="Répartition par campagne", height=400)
-st.plotly_chart(fig_pie, use_container_width=True)
+
+# Graphique hebdomadaire
+fig_weekly = go.Figure()
+fig_weekly.add_trace(go.Scatter(
+    x=weekly_data["Semaine"],
+    y=weekly_data["Taux d'adhérence"],
+    mode='markers+lines+text',
+    marker=dict(color=colors, size=10),
+    name="Taux d'adhérence",
+    text=[f"{val:.1f}%" for val in weekly_data["Taux d'adhérence"]],
+    textposition="top center"
+))
+fig_weekly.add_trace(go.Scatter(
+    x=semaines_completes,
+    y=[85]*len(semaines_completes),
+    mode='lines',
+    name="Objectif",
+    line=dict(dash='dash', color='blue')
+))
+fig_weekly.update_layout(title="Évolution hebdomadaire du taux d'adhérence", height=400, xaxis_title="Semaine", yaxis_title="% d'adhérence")
+
+# Affichage côte à côte des graphiques camembert et hebdomadaire
+col_pie, col_weekly = st.columns(2)
+
+with col_pie:
+    st.plotly_chart(fig_pie, use_container_width=True)
+
+with col_weekly:
+    st.plotly_chart(fig_weekly, use_container_width=True)
 
 # Heatmap améliorée (colonnes F à N)
 campagne_data_heatmap = df.iloc[2:14, 6:14]
@@ -154,24 +182,3 @@ fig_heatmap.update_layout(
     yaxis=dict(title="Mois")
 )
 st.plotly_chart(fig_heatmap, use_container_width=True)
-
-# Graphique hebdomadaire
-fig_weekly = go.Figure()
-fig_weekly.add_trace(go.Scatter(
-    x=weekly_data["Semaine"],
-    y=weekly_data["Taux d'adhérence"],
-    mode='markers+lines+text',
-    marker=dict(color=colors, size=10),
-    name="Taux d'adhérence",
-    text=[f"{val:.1f}%" for val in weekly_data["Taux d'adhérence"]],
-    textposition="top center"
-))
-fig_weekly.add_trace(go.Scatter(
-    x=semaines_completes,
-    y=[85]*len(semaines_completes),
-    mode='lines',
-    name="Objectif",
-    line=dict(dash='dash', color='blue')
-))
-fig_weekly.update_layout(title="Évolution hebdomadaire du taux d'adhérence", height=400, xaxis_title="Semaine", yaxis_title="% d'adhérence")
-st.plotly_chart(fig_weekly, use_container_width=True)
