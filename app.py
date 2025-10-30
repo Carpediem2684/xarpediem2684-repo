@@ -15,8 +15,13 @@ campagnes = df.iloc[1, 25:33].tolist()
 pic_realise = pd.Series(pd.to_numeric(df.iloc[2:14, 1], errors='coerce').fillna(0).astype(int).values, index=mois)
 pic_prevu = pd.Series(pd.to_numeric(df.iloc[2:14, 2], errors='coerce').fillna(0).astype(int).values, index=mois)
 ruptures = int(df.iloc[1, 16])
+
+# Taux d'adhérence global (W2)
 raw_adherence = pd.to_numeric(df.iloc[1, 22], errors='coerce')
 taux_adherence = (raw_adherence * 100) if pd.notna(raw_adherence) else 0
+
+# Taux d'adhérence S-1 (T2)
+adherence_s1 = pd.to_numeric(df.iloc[1, 19], errors='coerce')
 
 # Sidebar
 st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Logo_Gerflor.svg/2560px-Logo_Gerflor.svg.png", width=150)
@@ -50,29 +55,21 @@ if "current_value" not in st.session_state or st.session_state.get("mois_selecti
 st.markdown(f"<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - {uap_selection}</h1>", unsafe_allow_html=True)
 date_du_jour = datetime.today().strftime('%d/%m/%Y')
 st.markdown(f"<p style='text-align:right; font-size:16px; font-weight:bold;'>Date du jour : {date_du_jour}</p>", unsafe_allow_html=True)
-st.markdown(f"<h4 style='color:white;'>Taux d'adhérence S-1 : {taux_adherence:.1f}%</h4>", unsafe_allow_html=True)
 
 # Affichage des métriques
-
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} km²")
 col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} km²")
 col3.metric("Ruptures cette semaine", f"{ruptures}")
-col4.metric("Taux d'adhérence S-1", f"{taux_adherence:.1f}%")
+col4.metric("Taux d'adhérence S-1", f"{adherence_s1:.1f}%" if pd.notna(adherence_s1) else "N/A")
 
-# Camembert avec couleurs personnalisées
+# Graphiques côte à côte
 campagne_labels = df.iloc[1, 6:14].tolist()
 campagne_values = df[df.iloc[:, 0] == mois_selectionne].iloc[0, 6:14]
 campagne_values = pd.to_numeric(campagne_values, errors='coerce').fillna(0)
 couleurs_personnalisees = {
-    "PRIMETEX": "yellow",
-    "TEXLINE": "green",
-    "NERA": "blue",
-    "MOUSSE": "red",
-    "TARABUS": "lightgreen",
-    "SPORISOL": "lightgrey",
-    "START": "grey",
-    "TMAX": "brown"
+    "PRIMETEX": "yellow", "TEXLINE": "green", "NERA": "blue", "MOUSSE": "red",
+    "TARABUS": "lightgreen", "SPORISOL": "lightgrey", "START": "grey", "TMAX": "brown"
 }
 colors_pie = [couleurs_personnalisees.get(label, "white") for label in campagne_labels]
 
@@ -81,34 +78,26 @@ fig_pie = go.Figure(data=[
 ])
 fig_pie.update_layout(title="Répartition par campagne", height=400)
 
-# Graphique hebdomadaire
 fig_weekly = go.Figure()
 fig_weekly.add_trace(go.Scatter(
-    x=weekly_data["Semaine"],
-    y=weekly_data["Taux d'adhérence"],
-    mode='markers+lines+text',
-    marker=dict(color=colors, size=10),
-    name="Taux d'adhérence",
-    text=[f"{val:.1f}%" for val in weekly_data["Taux d'adhérence"]],
+    x=weekly_data["Semaine"], y=weekly_data["Taux d'adhérence"],
+    mode='markers+lines+text', marker=dict(color=colors, size=10),
+    name="Taux d'adhérence", text=[f"{val:.1f}%" for val in weekly_data["Taux d'adhérence"]],
     textposition="top center"
 ))
 fig_weekly.add_trace(go.Scatter(
-    x=semaines_completes,
-    y=[85]*len(semaines_completes),
-    mode='lines',
-    name="Objectif",
-    line=dict(dash='dash', color='blue')
+    x=semaines_completes, y=[85]*len(semaines_completes),
+    mode='lines', name="Objectif", line=dict(dash='dash', color='blue')
 ))
 fig_weekly.update_layout(title="Évolution hebdomadaire du taux d'adhérence", height=400, xaxis_title="Semaine", yaxis_title="% d'adhérence")
 
-# Affichage côte à côte des graphiques camembert et hebdomadaire
-col1, col2 = st.columns(2)
-with col1:
+col_pie, col_weekly = st.columns(2)
+with col_pie:
     st.plotly_chart(fig_pie, use_container_width=True)
-with col2:
+with col_weekly:
     st.plotly_chart(fig_weekly, use_container_width=True)
 
-# Boutons horizontaux avec Instant T (déplacés après les graphiques)
+# Campagnes restantes du mois
 st.markdown("### Campagnes restantes du mois")
 cols = st.columns(len(campagnes) + 1)
 if cols[0].button("🔄 Instant T"):
@@ -147,7 +136,7 @@ fig_dynamic = go.Figure(go.Indicator(
 ))
 st.plotly_chart(fig_dynamic, use_container_width=True)
 
-# Heatmap améliorée
+# Heatmap
 campagne_data_heatmap = df.iloc[2:14, 6:14]
 campagne_data_heatmap.columns = campagne_labels
 campagne_data_heatmap.index = mois
