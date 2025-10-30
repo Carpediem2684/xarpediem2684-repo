@@ -139,12 +139,10 @@ fig_weekly.add_trace(go.Scatter(
 fig_weekly.update_layout(title="Évolution hebdomadaire du taux d'adhérence", height=400, xaxis_title="Semaine", yaxis_title="% d'adhérence")
 
 # Affichage côte à côte des graphiques camembert et hebdomadaire
-col_pie, col_weekly = st.columns(2)
-
-with col_pie:
+col1, col2 = st.columns(2)
+with col1:
     st.plotly_chart(fig_pie, use_container_width=True)
-
-with col_weekly:
+with col2:
     st.plotly_chart(fig_weekly, use_container_width=True)
 
 # Heatmap améliorée (colonnes F à N)
