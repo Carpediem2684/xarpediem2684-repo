@@ -58,45 +58,6 @@ col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} km²")
 col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} km²")
 col3.metric("Ruptures cette semaine", f"{ruptures}")
 
-# Boutons horizontaux avec Instant T
-st.markdown("### Campagnes restantes du mois")
-cols = st.columns(len(campagnes) + 1)
-if cols[0].button("🔄 Instant T"):
-    st.session_state.current_value = pic_realise[mois_selectionne]
-    st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
-
-for i, campagne in enumerate(campagnes):
-    val = campagne_mois[campagne]
-    if val > 0:
-        clicked = st.session_state.campagne_clicks[campagne]
-        indicator = "🟢" if not clicked else "🔴"
-        if cols[i + 1].button(f"{indicator} {campagne}"):
-            st.session_state.campagne_clicks[campagne] = True
-            st.session_state.current_value += val
-            if st.session_state.current_value > pic_prevu[mois_selectionne]:
-                st.session_state.current_value = pic_prevu[mois_selectionne]
-
-# Jauge dynamique
-fig_dynamic = go.Figure(go.Indicator(
-    mode="gauge+number",
-    value=st.session_state.current_value,
-    title={'text': f"Progression PIC ({mois_selectionne})"},
-    gauge={
-        'axis': {'range': [0, pic_prevu[mois_selectionne]]},
-        'bar': {'color': "darkblue"},
-        'steps': [
-            {'range': [0, pic_prevu[mois_selectionne]*0.85], 'color': "lightgreen"},
-            {'range': [pic_prevu[mois_selectionne]*0.85, pic_prevu[mois_selectionne]], 'color': "yellow"}
-        ],
-        'threshold': {
-            'line': {'color': "red", 'width': 4},
-            'thickness': 0.75,
-            'value': pic_prevu[mois_selectionne]
-        }
-    }
-))
-st.plotly_chart(fig_dynamic, use_container_width=True)
-
 # Camembert avec couleurs personnalisées
 campagne_labels = df.iloc[1, 6:14].tolist()
 campagne_values = df[df.iloc[:, 0] == mois_selectionne].iloc[0, 6:14]
@@ -145,7 +106,46 @@ with col1:
 with col2:
     st.plotly_chart(fig_weekly, use_container_width=True)
 
-# Heatmap améliorée (colonnes F à N)
+# Boutons horizontaux avec Instant T (déplacés après les graphiques)
+st.markdown("### Campagnes restantes du mois")
+cols = st.columns(len(campagnes) + 1)
+if cols[0].button("🔄 Instant T"):
+    st.session_state.current_value = pic_realise[mois_selectionne]
+    st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
+
+for i, campagne in enumerate(campagnes):
+    val = campagne_mois[campagne]
+    if val > 0:
+        clicked = st.session_state.campagne_clicks[campagne]
+        indicator = "🟢" if not clicked else "🔴"
+        if cols[i + 1].button(f"{indicator} {campagne}"):
+            st.session_state.campagne_clicks[campagne] = True
+            st.session_state.current_value += val
+            if st.session_state.current_value > pic_prevu[mois_selectionne]:
+                st.session_state.current_value = pic_prevu[mois_selectionne]
+
+# Jauge dynamique
+fig_dynamic = go.Figure(go.Indicator(
+    mode="gauge+number",
+    value=st.session_state.current_value,
+    title={'text': f"Progression PIC ({mois_selectionne})"},
+    gauge={
+        'axis': {'range': [0, pic_prevu[mois_selectionne]]},
+        'bar': {'color': "darkblue"},
+        'steps': [
+            {'range': [0, pic_prevu[mois_selectionne]*0.85], 'color': "lightgreen"},
+            {'range': [pic_prevu[mois_selectionne]*0.85, pic_prevu[mois_selectionne]], 'color': "yellow"}
+        ],
+        'threshold': {
+            'line': {'color': "red", 'width': 4},
+            'thickness': 0.75,
+            'value': pic_prevu[mois_selectionne]
+        }
+    }
+))
+st.plotly_chart(fig_dynamic, use_container_width=True)
+
+# Heatmap améliorée
 campagne_data_heatmap = df.iloc[2:14, 6:14]
 campagne_data_heatmap.columns = campagne_labels
 campagne_data_heatmap.index = mois
