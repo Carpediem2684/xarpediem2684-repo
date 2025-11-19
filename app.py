@@ -11,7 +11,7 @@ df = pd.read_excel(file_path, sheet_name='2025', engine='openpyxl', header=None)
 
 # Initialisation
 mois = df.iloc[2:14, 0].tolist()
-campagnes = df.iloc[1, 25:33].tolist()
+campagnes = df.iloc[1, 25:33].tolist()  # Labels des campagnes (Z à AH)
 pic_realise = pd.Series(pd.to_numeric(df.iloc[2:14, 1], errors='coerce').fillna(0).astype(int).values, index=mois)
 pic_prevu = pd.Series(pd.to_numeric(df.iloc[2:14, 2], errors='coerce').fillna(0).astype(int).values, index=mois)
 ruptures = int(df.iloc[1, 16])
@@ -29,8 +29,8 @@ st.sidebar.title("Sélection UAP")
 uap_selection = st.sidebar.selectbox("Choisir une UAP", ["4M", "2M", "P2000", "KLAM"])
 mois_selectionne = st.sidebar.selectbox("Choisir un mois", mois)
 
-# Données campagnes
-campagne_data = df.iloc[2:14, 25:34]
+# Données campagnes (Z à AH)
+campagne_data = df.iloc[2:14, 25:34]  # Colonnes Z à AH
 campagne_data.columns = campagnes
 campagne_data.index = mois
 campagne_mois = campagne_data.loc[mois_selectionne].apply(pd.to_numeric, errors='coerce').fillna(0)
@@ -97,7 +97,7 @@ with col_pie:
 with col_weekly:
     st.plotly_chart(fig_weekly, use_container_width=True)
 
-# Campagnes restantes du mois
+# Campagnes restantes du mois (Z à AH)
 st.markdown("### Campagnes restantes du mois")
 cols = st.columns(len(campagnes) + 1)
 if cols[0].button("🔄 Instant T"):
