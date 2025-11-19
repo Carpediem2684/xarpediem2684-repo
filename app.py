@@ -51,6 +51,20 @@ if "current_value" not in st.session_state or st.session_state.get("mois_selecti
     st.session_state.current_value = pic_realise[mois_selectionne]
     st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
     st.session_state.mois_selectionne = mois_selectionne
+    st.session_state.bar_color = "darkblue"  # couleur par défaut
+
+# Définir les couleurs pour chaque campagne
+couleurs_campagnes = {
+    campagnes[0]: "green",
+    campagnes[1]: "purple",
+    campagnes[2]: "orange",
+    campagnes[3]: "pink",
+    campagnes[4]: "cyan",
+    campagnes[5]: "brown",
+    campagnes[6]: "blue",
+    campagnes[7]: "magenta",
+    campagnes[8]: "lime"
+}
 
 # Titre et date
 st.markdown(f"<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - {uap_selection}</h1>", unsafe_allow_html=True)
@@ -104,31 +118,31 @@ cols = st.columns(len(campagnes) + 1)
 if cols[0].button("🔄 Instant T"):
     st.session_state.current_value = pic_realise[mois_selectionne]
     st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
+    st.session_state.bar_color = "darkblue"
 
 for i, campagne in enumerate(campagnes):
     val = campagne_mois[campagne]
     if val > 0:
         clicked = st.session_state.campagne_clicks[campagne]
-        indicator = "🟢" if not clicked else "🔴"  # ✅ logique corrigée
+        indicator = "🟢" if not clicked else "🔴"
         if cols[i + 1].button(f"{indicator} {campagne}"):
-            if not clicked:  # ✅ éviter double ajout
+            if not clicked:
                 st.session_state.campagne_clicks[campagne] = True
                 st.session_state.current_value += val
-                if st.session_state.current_value > pic_prevu[mois_selectionne]:
-                    st.session_state.current_value = st.session_state.current_value  # garde la valeur réelle
+                st.session_state.bar_color = couleurs_campagnes.get(campagne, "darkblue")  # ✅ couleur dynamique
 
-# Jauge dynamique améliorée avec zone grisée si dépassement
+# Jauge dynamique améliorée avec zone grisée et couleur dynamique
 fig_dynamic = go.Figure(go.Indicator(
     mode="gauge+number",
     value=st.session_state.current_value,
     title={'text': f"Progression PIC ({mois_selectionne})"},
     gauge={
-        'axis': {'range': [0, pic_prevu[mois_selectionne] * 1.2]},  # ✅ étendu à 120%
-        'bar': {'color': "darkblue"},
+        'axis': {'range': [0, pic_prevu[mois_selectionne] * 1.2]},
+        'bar': {'color': st.session_state.bar_color},  # ✅ couleur dynamique
         'steps': [
             {'range': [0, pic_prevu[mois_selectionne]*0.85], 'color': "lightgreen"},
             {'range': [pic_prevu[mois_selectionne]*0.85, pic_prevu[mois_selectionne]], 'color': "yellow"},
-            {'range': [pic_prevu[mois_selectionne], pic_prevu[mois_selectionne]*1.2], 'color': "lightgrey"}  # ✅ zone grisée
+            {'range': [pic_prevu[mois_selectionne], pic_prevu[mois_selectionne]*1.2], 'color': "lightgrey"}
         ],
         'threshold': {
             'line': {'color': "red", 'width': 4},
@@ -139,7 +153,7 @@ fig_dynamic = go.Figure(go.Indicator(
 ))
 st.plotly_chart(fig_dynamic, use_container_width=True)
 
-# ✅ Affichage du dépassement si la valeur dépasse le PIC prévu
+# Affichage du dépassement si la valeur dépasse le PIC prévu
 if st.session_state.current_value > pic_prevu[mois_selectionne]:
     st.markdown(
         f"<p style='color:red; font-size:18px; font-weight:bold;'>⚠ Dépassement du PIC prévu : {st.session_state.current_value} km²</p>",
