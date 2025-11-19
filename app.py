@@ -51,7 +51,10 @@ if "current_value" not in st.session_state or st.session_state.get("mois_selecti
     st.session_state.current_value = pic_realise[mois_selectionne]
     st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
     st.session_state.mois_selectionne = mois_selectionne
-    st.session_state.bar_color = "darkblue"  # couleur par défaut
+
+# ✅ Initialisation de la couleur par défaut pour éviter l'erreur
+if "bar_color" not in st.session_state:
+    st.session_state.bar_color = "darkblue"
 
 # Définir les couleurs pour chaque campagne
 couleurs_campagnes = {
@@ -138,7 +141,7 @@ fig_dynamic = go.Figure(go.Indicator(
     title={'text': f"Progression PIC ({mois_selectionne})"},
     gauge={
         'axis': {'range': [0, pic_prevu[mois_selectionne] * 1.2]},
-        'bar': {'color': st.session_state.bar_color},  # ✅ couleur dynamique
+        'bar': {'color': st.session_state.bar_color},
         'steps': [
             {'range': [0, pic_prevu[mois_selectionne]*0.85], 'color': "lightgreen"},
             {'range': [pic_prevu[mois_selectionne]*0.85, pic_prevu[mois_selectionne]], 'color': "yellow"},
