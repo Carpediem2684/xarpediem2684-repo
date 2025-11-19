@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -11,7 +12,7 @@ df = pd.read_excel(file_path, sheet_name='2025', engine='openpyxl', header=None)
 
 # Initialisation
 mois = df.iloc[2:14, 0].tolist()
-campagnes = df.iloc[1, 25:34].tolist()  # Correction : Z à AH inclus
+campagnes = df.iloc[1, 25:34].tolist()  # Colonnes Z à AH incluses
 pic_realise = pd.Series(pd.to_numeric(df.iloc[2:14, 1], errors='coerce').fillna(0).astype(int).values, index=mois)
 pic_prevu = pd.Series(pd.to_numeric(df.iloc[2:14, 2], errors='coerce').fillna(0).astype(int).values, index=mois)
 ruptures = int(df.iloc[1, 16])
@@ -97,10 +98,10 @@ with col_pie:
 with col_weekly:
     st.plotly_chart(fig_weekly, use_container_width=True)
 
-# Campagnes restantes du mois
+# Campagnes restantes du mois avec indicateurs 🟢 et 🔴
 st.markdown("### Campagnes restantes du mois")
 cols = st.columns(len(campagnes) + 1)
-if cols[0].button(" Instant T"):
+if cols[0].button("🔄 Instant T"):
     st.session_state.current_value = pic_realise[mois_selectionne]
     st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
 
@@ -108,12 +109,13 @@ for i, campagne in enumerate(campagnes):
     val = campagne_mois[campagne]
     if val > 0:
         clicked = st.session_state.campagne_clicks[campagne]
-        indicator = "" if not clicked else ""
+        indicator = "🟢" if not clicked else "🔴"  # ✅ logique corrigée
         if cols[i + 1].button(f"{indicator} {campagne}"):
-            st.session_state.campagne_clicks[campagne] = True
-            st.session_state.current_value += val
-            if st.session_state.current_value > pic_prevu[mois_selectionne]:
-                st.session_state.current_value = pic_prevu[mois_selectionne]
+            if not clicked:  # ✅ éviter double ajout
+                st.session_state.campagne_clicks[campagne] = True
+                st.session_state.current_value += val
+                if st.session_state.current_value > pic_prevu[mois_selectionne]:
+                    st.session_state.current_value = pic_prevu[mois_selectionne]
 
 # Jauge dynamique
 fig_dynamic = go.Figure(go.Indicator(
