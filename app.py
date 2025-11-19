@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -30,7 +31,7 @@ uap_selection = st.sidebar.selectbox("Choisir une UAP", ["4M", "2M", "P2000", "K
 mois_selectionne = st.sidebar.selectbox("Choisir un mois", mois)
 
 # Données campagnes (Z à AH)
-campagne_data = df.iloc2:14[1]()
+campagne_data = df.iloc[2:14, 25:34]
 campagne_data.columns = campagnes
 campagne_data.index = mois
 campagne_mois = campagne_data.loc[mois_selectionne].apply(pd.to_numeric, errors='coerce').fillna(0)
@@ -100,7 +101,7 @@ with col_weekly:
 # Campagnes restantes du mois
 st.markdown("### Campagnes restantes du mois")
 cols = st.columns(len(campagnes) + 1)
-if cols[0].button("🔄 Instant T"):
+if cols[0].button(" Instant T"):
     st.session_state.current_value = pic_realise[mois_selectionne]
     st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
 
@@ -108,7 +109,7 @@ for i, campagne in enumerate(campagnes):
     val = campagne_mois[campagne]
     if val > 0:
         clicked = st.session_state.campagne_clicks[campagne]
-        indicator = "🟢" if not clicked else "🔴"
+        indicator = "" if not clicked else ""
         if cols[i + 1].button(f"{indicator} {campagne}"):
             st.session_state.campagne_clicks[campagne] = True
             st.session_state.current_value += val
@@ -137,7 +138,7 @@ fig_dynamic = go.Figure(go.Indicator(
 st.plotly_chart(fig_dynamic, use_container_width=True)
 
 # Heatmap
-campagne_data_heatmap = df.iloc2:14[2]()
+campagne_data_heatmap = df.iloc[2:14, 6:14]
 campagne_data_heatmap.columns = campagne_labels
 campagne_data_heatmap.index = mois
 campagne_data_heatmap = campagne_data_heatmap.apply(pd.to_numeric, errors='coerce').fillna(0)
