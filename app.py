@@ -30,7 +30,7 @@ uap_selection = st.sidebar.selectbox("Choisir une UAP", ["4M", "2M", "P2000", "K
 mois_selectionne = st.sidebar.selectbox("Choisir un mois", mois)
 
 # Données campagnes
-campagne_data = df.iloc[2:14, 25:33]
+campagne_data = df.iloc[2:14, 25:34]
 campagne_data.columns = campagnes
 campagne_data.index = mois
 campagne_mois = campagne_data.loc[mois_selectionne].apply(pd.to_numeric, errors='coerce').fillna(0)
