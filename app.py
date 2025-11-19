@@ -115,7 +115,7 @@ for i, campagne in enumerate(campagnes):
                 st.session_state.campagne_clicks[campagne] = True
                 st.session_state.current_value += val
                 if st.session_state.current_value > pic_prevu[mois_selectionne]:
-                    st.session_state.current_value = pic_prevu[mois_selectionne]
+                    st.session_state.current_value = st.session_state.current_value  # garde la valeur réelle
 
 # Jauge dynamique améliorée avec zone grisée si dépassement
 fig_dynamic = go.Figure(go.Indicator(
@@ -138,6 +138,13 @@ fig_dynamic = go.Figure(go.Indicator(
     }
 ))
 st.plotly_chart(fig_dynamic, use_container_width=True)
+
+# ✅ Affichage du dépassement si la valeur dépasse le PIC prévu
+if st.session_state.current_value > pic_prevu[mois_selectionne]:
+    st.markdown(
+        f"<p style='color:red; font-size:18px; font-weight:bold;'>⚠ Dépassement du PIC prévu : {st.session_state.current_value} km²</p>",
+        unsafe_allow_html=True
+    )
 
 # Heatmap
 campagne_data_heatmap = df.iloc[2:14, 6:14]
