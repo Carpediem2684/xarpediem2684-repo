@@ -117,17 +117,18 @@ for i, campagne in enumerate(campagnes):
                 if st.session_state.current_value > pic_prevu[mois_selectionne]:
                     st.session_state.current_value = pic_prevu[mois_selectionne]
 
-# Jauge dynamique
+# Jauge dynamique améliorée avec zone grisée si dépassement
 fig_dynamic = go.Figure(go.Indicator(
     mode="gauge+number",
     value=st.session_state.current_value,
     title={'text': f"Progression PIC ({mois_selectionne})"},
     gauge={
-        'axis': {'range': [0, pic_prevu[mois_selectionne]]},
+        'axis': {'range': [0, pic_prevu[mois_selectionne] * 1.2]},  # ✅ étendu à 120%
         'bar': {'color': "darkblue"},
         'steps': [
             {'range': [0, pic_prevu[mois_selectionne]*0.85], 'color': "lightgreen"},
-            {'range': [pic_prevu[mois_selectionne]*0.85, pic_prevu[mois_selectionne]], 'color': "yellow"}
+            {'range': [pic_prevu[mois_selectionne]*0.85, pic_prevu[mois_selectionne]], 'color': "yellow"},
+            {'range': [pic_prevu[mois_selectionne], pic_prevu[mois_selectionne]*1.2], 'color': "lightgrey"}  # ✅ zone grisée
         ],
         'threshold': {
             'line': {'color': "red", 'width': 4},
