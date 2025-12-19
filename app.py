@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -7,10 +6,9 @@ import time
 
 st.set_page_config(page_title='Dashboard PIC', layout='wide')
 
-# === Paramètre : URL du GIF hébergé (GitHub raw ou autre) ===
-# Remplacez par votre URL raw GitHub, par ex. :
-# "https://raw.githubusercontent.com/<user>/<repo>/main/GIF_20251219_081101_562.gif"
-GIF_URL = "https://raw.githubusercontent.com/<user>/<repo>/main/GIF_20251219_081101_562.gif"
+# === Paramètres GIF ===
+# Tu as mis le fichier GIF dans le même dossier que app.py
+GIF_PATH = 'GIF_20251219_081101_562.gif'  # chemin local
 GIF_DURATION_SECONDS = 15
 
 # Chargement des données
@@ -53,55 +51,49 @@ weekly_data["Semaine"] = weekly_data["Semaine"].astype(int)
 semaines_completes = list(range(1, 51))
 colors = ["green" if val >= 85 else "red" for val in weekly_data["Taux d'adhérence"]]
 
-# Initialisation session
+# Initialisation session + déclenchement GIF sur changement de mois
 if "current_value" not in st.session_state or st.session_state.get("mois_selectionne") != mois_selectionne:
     st.session_state.current_value = pic_realise[mois_selectionne]
     st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
     st.session_state.mois_selectionne = mois_selectionne
-    # ✅ Couleur par défaut de la jauge si reset
-    if "bar_color" not in st.session_state:
-        st.session_state.bar_color = "darkblue"
-    else:
-        st.session_state.bar_color = "darkblue"
-
-    # ✅ Nouveau : si PIC Réalisé > PIC Prévu pour le mois sélectionné,
-    # alors on déclenche l'affichage d'un GIF pendant 15 s
-    try:
-        if pic_realise[mois_selectionne] > pic_prevu[mois_selectionne]:
-            st.session_state.show_gif_until = time.time() + GIF_DURATION_SECONDS
-            st.session_state.gif_src = GIF_URL
-        else:
-            st.session_state.pop("show_gif_until", None)
-    except Exception:
-        pass
-
-# ✅ Initialisation de la couleur par défaut si inexistante
-if "bar_color" not in st.session_state:
     st.session_state.bar_color = "darkblue"
 
-# Définir les couleurs pour chaque campagne
-couleurs_campagnes = {
-    campagnes[0]: "green",
-    campagnes[1]: "purple",
-    campagnes[2]: "orange",
-    campagnes[3]: "pink",
-    campagnes[4]: "cyan",
-    campagnes[5]: "brown",
-    campagnes[6]: "blue",
-    campagnes[7]: "magenta",
-    campagnes[8]: "lime"
-}
+    # Déclenche le GIF si dépassement
+    if pic_realise[mois_selectionne] > pic_prevu[mois_selectionne]:
+        st.session_state.show_gif_until = time.time() + GIF_DURATION_SECONDS
+        st.session_state.gif_src = GIF_PATH  # local file
+    else:
+        st.session_state.pop("show_gif_until", None)
+
+# --- Overlay pleine page (très grand) pendant 15 s ---
+if st.session_state.get("show_gif_until") and time.time() < st.session_state.show_gif_until:
+    st.markdown(
+        f"""
+        <style>
+            .gif-overlay {{
+                position: fixed; inset: 0;
+                background: rgba(0,0,0,0.6);
+                display: flex; align-items: center; justify-content: center;
+                z-index: 9999;
+            }}
+            .gif-overlay img {{
+                max-width: 92vw; max-height: 92vh;
+                border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+            }}
+        </style>
+        <div class="gif-overlay">
+            <img src="{st.session_state.get('gif_src', GIF_PATH)}" />
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+elif st.session_state.get("show_gif_until") and time.time() >= st.session_state.show_gif_until:
+    st.session_state.pop("show_gif_until", None)
 
 # Titre et date
 st.markdown(f"<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - {uap_selection}</h1>", unsafe_allow_html=True)
 date_du_jour = datetime.today().strftime('%d/%m/%Y')
 st.markdown(f"<p style='text-align:right; font-size:16px; font-weight:bold;'>Date du jour : {date_du_jour}</p>", unsafe_allow_html=True)
-
-# --- Affichage du GIF pendant 15 s si la fenêtre est active ---
-if st.session_state.get("show_gif_until") and time.time() < st.session_state.show_gif_until:
-    st.empty().image(st.session_state.get("gif_src", GIF_URL), use_container_width=True)
-elif st.session_state.get("show_gif_until") and time.time() >= st.session_state.show_gif_until:
-    st.session_state.pop("show_gif_until", None)
 
 # Affichage des métriques
 col1, col2, col3, col4 = st.columns(4)
@@ -163,9 +155,9 @@ for i, campagne in enumerate(campagnes):
             if not clicked:
                 st.session_state.campagne_clicks[campagne] = True
                 st.session_state.current_value += val
-                st.session_state.bar_color = couleurs_campagnes.get(campagne, "darkblue")  # ✅ couleur dynamique
+                st.session_state.bar_color = couleurs_personnalisees.get(campagne, "darkblue") if campagne in couleurs_personnalisees else "darkblue"
 
-# Jauge dynamique améliorée avec zone grisée et couleur dynamique
+# Jauge dynamique
 fig_dynamic = go.Figure(go.Indicator(
     mode="gauge+number",
     value=st.session_state.current_value,
@@ -188,7 +180,7 @@ fig_dynamic = go.Figure(go.Indicator(
 
 st.plotly_chart(fig_dynamic, use_container_width=True)
 
-# Affichage du dépassement si la valeur dépasse le PIC prévu
+# Message de dépassement
 if st.session_state.current_value > pic_prevu[mois_selectionne]:
     st.markdown(
         f"<p style='color:red; font-size:18px; font-weight:bold;'>⚠ Dépassement du PIC prévu : {st.session_state.current_value} km²</p>",
