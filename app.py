@@ -3,25 +3,12 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
-import time
-import base64
 
 st.set_page_config(page_title='Dashboard PIC', layout='wide')
 
 # === Paramètres GIF ===
-GIF_PATH = 'GIF_20251219_081101_562.gif'  # fichier local, même dossier que app.py
-GIF_DURATION_SECONDS = 15
-
-# Helper: convertir le GIF local en data URI (fiable dans HTML)
-def load_gif_as_data_uri(path: str) -> str:
-    try:
-        with open(path, 'rb') as f:
-            data = f.read()
-        b64 = base64.b64encode(data).decode('utf-8')
-        return f"data:image/gif;base64,{b64}"
-    except Exception as e:
-        st.warning(f"Impossible de charger le GIF: {e}")
-        return ""
+# Ton GIF est dans le même dossier que app.py
+GIF_PATH = 'GIF_20251219_081101_562.gif'  # chemin local
 
 # Chargement des données
 file_path = 'Essai appli dashboard (1).xlsx'
@@ -63,46 +50,55 @@ weekly_data["Semaine"] = weekly_data["Semaine"].astype(int)
 semaines_completes = list(range(1, 51))
 colors = ["green" if val >= 85 else "red" for val in weekly_data["Taux d'adhérence"]]
 
-# --- Détection du changement de mois & activation du GIF ---
-if "current_value" not in st.session_state or st.session_state.get("mois_selectionne") != mois_selectionne:
+# --- État session pour le bouton Félicitations ---
+if "gif_visible" not in st.session_state:
+    st.session_state.gif_visible = False
+if "mois_selectionne" not in st.session_state:
+    st.session_state.mois_selectionne = mois_selectionne
+if "current_value" not in st.session_state or st.session_state.mois_selectionne != mois_selectionne:
+    # Reset de l'état au changement de mois
     st.session_state.current_value = pic_realise[mois_selectionne]
     st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
     st.session_state.mois_selectionne = mois_selectionne
     st.session_state.bar_color = "darkblue"
+    # On masque le GIF au changement de mois
+    st.session_state.gif_visible = False
 
-    if pic_realise[mois_selectionne] > pic_prevu[mois_selectionne]:
-        st.session_state.show_gif_until = time.time() + GIF_DURATION_SECONDS
-        st.session_state.gif_data_uri = load_gif_as_data_uri(GIF_PATH)
-    else:
-        st.session_state.pop("show_gif_until", None)
-        st.session_state.pop("gif_data_uri", None)
-
-# --- Overlay pleine page + minuterie fiable ---
-if st.session_state.get("show_gif_until"):
-    remaining = st.session_state.show_gif_until - time.time()
-    if remaining > 0 and st.session_state.get("gif_data_uri"):
-        st.markdown(f"""
-            <style>
-                .gif-overlay {{
-                    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
-                    display: flex; align-items: center; justify-content: center;
-                    z-index: 9999;
-                }}
-                .gif-overlay img {{ max-width: 92vw; max-height: 92vh; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.45); }}
-            </style>
-            <div class="gif-overlay"><img src="{st.session_state.gif_data_uri}" /></div>
-        """, unsafe_allow_html=True)
-        # Force un re-render dans ~1s tant que le GIF doit rester affiché
-        time.sleep(1)
-        st.experimental_rerun()
-    else:
-        st.session_state.pop("show_gif_until", None)
-        st.session_state.pop("gif_data_uri", None)
+# Définir les couleurs pour chaque campagne
+couleurs_campagnes = {
+    campagnes[0]: "green",
+    campagnes[1]: "purple",
+    campagnes[2]: "orange",
+    campagnes[3]: "pink",
+    campagnes[4]: "cyan",
+    campagnes[5]: "brown",
+    campagnes[6]: "blue",
+    campagnes[7]: "magenta",
+    campagnes[8]: "lime"
+}
 
 # Titre et date
 st.markdown(f"<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - {uap_selection}</h1>", unsafe_allow_html=True)
 date_du_jour = datetime.today().strftime('%d/%m/%Y')
 st.markdown(f"<p style='text-align:right; font-size:16px; font-weight:bold;'>Date du jour : {date_du_jour}</p>", unsafe_allow_html=True)
+
+# --- Bouton Félicitations (au-dessus des métriques) ---
+col_btn = st.container()
+with col_btn:
+    if pic_realise[mois_selectionne] > pic_prevu[mois_selectionne]:
+        # Libellé dynamique
+        label = "🎉 Félicitations (afficher le GIF)" if not st.session_state.gif_visible else "❌ Masquer le GIF"
+        if st.button(label):
+            st.session_state.gif_visible = not st.session_state.gif_visible
+    else:
+        # Rien n'apparaît si pas de dépassement
+        pass
+
+# Affichage du GIF en grand si gif_visible == True
+if st.session_state.gif_visible:
+    st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
+    st.image(GIF_PATH, use_container_width=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # Affichage des métriques
 col1, col2, col3, col4 = st.columns(4)
@@ -133,7 +129,7 @@ fig_weekly.add_trace(go.Scatter(
     x=weekly_data["Semaine"], y=weekly_data["Taux d'adhérence"],
     mode='markers+lines+text', marker=dict(color=colors, size=10),
     name="Taux d'adhérence", text=[f"{val:.1f}%" for val in weekly_data["Taux d'adhérence"]],
-    textposition='top center'
+    textposition="top center"
 ))
 fig_weekly.add_trace(go.Scatter(
     x=semaines_completes, y=[85]*len(semaines_completes),
@@ -147,7 +143,7 @@ with col_pie:
 with col_weekly:
     st.plotly_chart(fig_weekly, use_container_width=True)
 
-# Campagnes restantes du mois
+# Campagnes restantes du mois avec indicateurs 🟢 et 🔴
 st.markdown("### Campagnes restantes du mois")
 cols = st.columns(len(campagnes) + 1)
 if cols[0].button("🔄 Instant T"):
@@ -164,7 +160,7 @@ for i, campagne in enumerate(campagnes):
             if not clicked:
                 st.session_state.campagne_clicks[campagne] = True
                 st.session_state.current_value += val
-                st.session_state.bar_color = couleurs_personnalisees.get(campagne, "darkblue") if campagne in couleurs_personnalisees else "darkblue"
+                st.session_state.bar_color = couleurs_campagnes.get(campagne, "darkblue")
 
 # Jauge dynamique
 fig_dynamic = go.Figure(go.Indicator(
