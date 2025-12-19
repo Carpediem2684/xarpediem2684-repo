@@ -3,8 +3,15 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
+import time
 
 st.set_page_config(page_title='Dashboard PIC', layout='wide')
+
+# === Paramètre : URL du GIF hébergé (GitHub raw ou autre) ===
+# Remplacez par votre URL raw GitHub, par ex. :
+# "https://raw.githubusercontent.com/<user>/<repo>/main/GIF_20251219_081101_562.gif"
+GIF_URL = "https://raw.githubusercontent.com/<user>/<repo>/main/GIF_20251219_081101_562.gif"
+GIF_DURATION_SECONDS = 15
 
 # Chargement des données
 file_path = 'Essai appli dashboard (1).xlsx'
@@ -51,8 +58,24 @@ if "current_value" not in st.session_state or st.session_state.get("mois_selecti
     st.session_state.current_value = pic_realise[mois_selectionne]
     st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
     st.session_state.mois_selectionne = mois_selectionne
+    # ✅ Couleur par défaut de la jauge si reset
+    if "bar_color" not in st.session_state:
+        st.session_state.bar_color = "darkblue"
+    else:
+        st.session_state.bar_color = "darkblue"
 
-# ✅ Initialisation de la couleur par défaut pour éviter l'erreur
+    # ✅ Nouveau : si PIC Réalisé > PIC Prévu pour le mois sélectionné,
+    # alors on déclenche l'affichage d'un GIF pendant 15 s
+    try:
+        if pic_realise[mois_selectionne] > pic_prevu[mois_selectionne]:
+            st.session_state.show_gif_until = time.time() + GIF_DURATION_SECONDS
+            st.session_state.gif_src = GIF_URL
+        else:
+            st.session_state.pop("show_gif_until", None)
+    except Exception:
+        pass
+
+# ✅ Initialisation de la couleur par défaut si inexistante
 if "bar_color" not in st.session_state:
     st.session_state.bar_color = "darkblue"
 
@@ -74,6 +97,12 @@ st.markdown(f"<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - {uap
 date_du_jour = datetime.today().strftime('%d/%m/%Y')
 st.markdown(f"<p style='text-align:right; font-size:16px; font-weight:bold;'>Date du jour : {date_du_jour}</p>", unsafe_allow_html=True)
 
+# --- Affichage du GIF pendant 15 s si la fenêtre est active ---
+if st.session_state.get("show_gif_until") and time.time() < st.session_state.show_gif_until:
+    st.empty().image(st.session_state.get("gif_src", GIF_URL), use_container_width=True)
+elif st.session_state.get("show_gif_until") and time.time() >= st.session_state.show_gif_until:
+    st.session_state.pop("show_gif_until", None)
+
 # Affichage des métriques
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} km²")
@@ -85,6 +114,7 @@ col4.metric("Taux d'adhérence S-1", f"{adherence_s1:.1f}%" if pd.notna(adherenc
 campagne_labels = df.iloc[1, 6:14].tolist()
 campagne_values = df[df.iloc[:, 0] == mois_selectionne].iloc[0, 6:14]
 campagne_values = pd.to_numeric(campagne_values, errors='coerce').fillna(0)
+
 couleurs_personnalisees = {
     "PRIMETEX": "yellow", "TEXLINE": "green", "NERA": "blue", "MOUSSE": "red",
     "TARABUS": "lightgreen", "SPORISOL": "lightgrey", "START": "grey", "TMAX": "brown"
@@ -92,7 +122,8 @@ couleurs_personnalisees = {
 colors_pie = [couleurs_personnalisees.get(label, "white") for label in campagne_labels]
 
 fig_pie = go.Figure(data=[
-    go.Pie(labels=campagne_labels, values=campagne_values, hole=0.4, textinfo='label+percent+value', marker=dict(colors=colors_pie))
+    go.Pie(labels=campagne_labels, values=campagne_values, hole=0.4,
+           textinfo='label+percent+value', marker=dict(colors=colors_pie))
 ])
 fig_pie.update_layout(title="Répartition par campagne", height=400)
 
@@ -154,6 +185,7 @@ fig_dynamic = go.Figure(go.Indicator(
         }
     }
 ))
+
 st.plotly_chart(fig_dynamic, use_container_width=True)
 
 # Affichage du dépassement si la valeur dépasse le PIC prévu
@@ -179,6 +211,7 @@ fig_heatmap = go.Figure(data=go.Heatmap(
     zmax=campagne_data_heatmap.values.max(),
     hoverongaps=False
 ))
+
 annotations = []
 for i, mois_val in enumerate(campagne_data_heatmap.index):
     for j, campagne_val in enumerate(campagne_data_heatmap.columns):
@@ -190,6 +223,7 @@ for i, mois_val in enumerate(campagne_data_heatmap.index):
             showarrow=False,
             font=dict(color="white" if value < campagne_data_heatmap.values.max()/2 else "black", size=10)
         ))
+
 fig_heatmap.update_layout(
     title="Heatmap des campagnes (améliorée)",
     height=600,
@@ -197,4 +231,5 @@ fig_heatmap.update_layout(
     xaxis=dict(title="Campagnes", tickangle=-45),
     yaxis=dict(title="Mois")
 )
+
 st.plotly_chart(fig_heatmap, use_container_width=True)
