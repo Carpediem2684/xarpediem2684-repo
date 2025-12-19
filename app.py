@@ -70,44 +70,31 @@ if "current_value" not in st.session_state or st.session_state.get("mois_selecti
     st.session_state.mois_selectionne = mois_selectionne
     st.session_state.bar_color = "darkblue"
 
-    # Déclenche le GIF si dépassement
     if pic_realise[mois_selectionne] > pic_prevu[mois_selectionne]:
         st.session_state.show_gif_until = time.time() + GIF_DURATION_SECONDS
-        st.session_state.gif_data_uri = load_gif_as_data_uri(GIF_PATH)  # base64
+        st.session_state.gif_data_uri = load_gif_as_data_uri(GIF_PATH)
     else:
         st.session_state.pop("show_gif_until", None)
         st.session_state.pop("gif_data_uri", None)
 
-# --- Overlay pleine page : grand, fiable, et auto-refresh pour disparaître ---
+# --- Overlay pleine page + minuterie fiable ---
 if st.session_state.get("show_gif_until"):
-    # Auto-refresh toutes les 1s pendant l'affichage
-    st_autorefresh_count = st.experimental_rerun if False else None  # placeholder to keep import free
-    st_autorefresh = st.autorefresh if hasattr(st, 'autorefresh') else None
-    # Streamlit >=1.25 a st.autorefresh; sinon fallback sur placeholder + no-op
-    if st_autorefresh:
-        st_autorefresh(interval=1000, key="gif_autorefresh")
-
-    if time.time() < st.session_state.show_gif_until and st.session_state.get("gif_data_uri"):
-        st.markdown(
-            f"""
+    remaining = st.session_state.show_gif_until - time.time()
+    if remaining > 0 and st.session_state.get("gif_data_uri"):
+        st.markdown(f"""
             <style>
                 .gif-overlay {{
-                    position: fixed; inset: 0;
-                    background: rgba(0,0,0,0.6);
+                    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
                     display: flex; align-items: center; justify-content: center;
                     z-index: 9999;
                 }}
-                .gif-overlay img {{
-                    max-width: 92vw; max-height: 92vh;
-                    border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.45);
-                }}
+                .gif-overlay img {{ max-width: 92vw; max-height: 92vh; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.45); }}
             </style>
-            <div class="gif-overlay">
-                <img src="{st.session_state.gif_data_uri}" />
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+            <div class="gif-overlay"><img src="{st.session_state.gif_data_uri}" /></div>
+        """, unsafe_allow_html=True)
+        # Force un re-render dans ~1s tant que le GIF doit rester affiché
+        time.sleep(1)
+        st.experimental_rerun()
     else:
         st.session_state.pop("show_gif_until", None)
         st.session_state.pop("gif_data_uri", None)
@@ -146,7 +133,7 @@ fig_weekly.add_trace(go.Scatter(
     x=weekly_data["Semaine"], y=weekly_data["Taux d'adhérence"],
     mode='markers+lines+text', marker=dict(color=colors, size=10),
     name="Taux d'adhérence", text=[f"{val:.1f}%" for val in weekly_data["Taux d'adhérence"]],
-    textposition="top center"
+    textposition='top center'
 ))
 fig_weekly.add_trace(go.Scatter(
     x=semaines_completes, y=[85]*len(semaines_completes),
@@ -160,7 +147,7 @@ with col_pie:
 with col_weekly:
     st.plotly_chart(fig_weekly, use_container_width=True)
 
-# Campagnes restantes du mois avec indicateurs 🟢 et 🔴
+# Campagnes restantes du mois
 st.markdown("### Campagnes restantes du mois")
 cols = st.columns(len(campagnes) + 1)
 if cols[0].button("🔄 Instant T"):
