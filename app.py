@@ -1,15 +1,27 @@
+
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
 import time
+import base64
 
 st.set_page_config(page_title='Dashboard PIC', layout='wide')
 
 # === Paramètres GIF ===
-# Tu as mis le fichier GIF dans le même dossier que app.py
-GIF_PATH = 'GIF_20251219_081101_562.gif'  # chemin local
+GIF_PATH = 'GIF_20251219_081101_562.gif'  # fichier local, même dossier que app.py
 GIF_DURATION_SECONDS = 15
+
+# Helper: convertir le GIF local en data URI (fiable dans HTML)
+def load_gif_as_data_uri(path: str) -> str:
+    try:
+        with open(path, 'rb') as f:
+            data = f.read()
+        b64 = base64.b64encode(data).decode('utf-8')
+        return f"data:image/gif;base64,{b64}"
+    except Exception as e:
+        st.warning(f"Impossible de charger le GIF: {e}")
+        return ""
 
 # Chargement des données
 file_path = 'Essai appli dashboard (1).xlsx'
@@ -51,7 +63,7 @@ weekly_data["Semaine"] = weekly_data["Semaine"].astype(int)
 semaines_completes = list(range(1, 51))
 colors = ["green" if val >= 85 else "red" for val in weekly_data["Taux d'adhérence"]]
 
-# Initialisation session + déclenchement GIF sur changement de mois
+# --- Détection du changement de mois & activation du GIF ---
 if "current_value" not in st.session_state or st.session_state.get("mois_selectionne") != mois_selectionne:
     st.session_state.current_value = pic_realise[mois_selectionne]
     st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
@@ -61,34 +73,44 @@ if "current_value" not in st.session_state or st.session_state.get("mois_selecti
     # Déclenche le GIF si dépassement
     if pic_realise[mois_selectionne] > pic_prevu[mois_selectionne]:
         st.session_state.show_gif_until = time.time() + GIF_DURATION_SECONDS
-        st.session_state.gif_src = GIF_PATH  # local file
+        st.session_state.gif_data_uri = load_gif_as_data_uri(GIF_PATH)  # base64
     else:
         st.session_state.pop("show_gif_until", None)
+        st.session_state.pop("gif_data_uri", None)
 
-# --- Overlay pleine page (très grand) pendant 15 s ---
-if st.session_state.get("show_gif_until") and time.time() < st.session_state.show_gif_until:
-    st.markdown(
-        f"""
-        <style>
-            .gif-overlay {{
-                position: fixed; inset: 0;
-                background: rgba(0,0,0,0.6);
-                display: flex; align-items: center; justify-content: center;
-                z-index: 9999;
-            }}
-            .gif-overlay img {{
-                max-width: 92vw; max-height: 92vh;
-                border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.45);
-            }}
-        </style>
-        <div class="gif-overlay">
-            <img src="{st.session_state.get('gif_src', GIF_PATH)}" />
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-elif st.session_state.get("show_gif_until") and time.time() >= st.session_state.show_gif_until:
-    st.session_state.pop("show_gif_until", None)
+# --- Overlay pleine page : grand, fiable, et auto-refresh pour disparaître ---
+if st.session_state.get("show_gif_until"):
+    # Auto-refresh toutes les 1s pendant l'affichage
+    st_autorefresh_count = st.experimental_rerun if False else None  # placeholder to keep import free
+    st_autorefresh = st.autorefresh if hasattr(st, 'autorefresh') else None
+    # Streamlit >=1.25 a st.autorefresh; sinon fallback sur placeholder + no-op
+    if st_autorefresh:
+        st_autorefresh(interval=1000, key="gif_autorefresh")
+
+    if time.time() < st.session_state.show_gif_until and st.session_state.get("gif_data_uri"):
+        st.markdown(
+            f"""
+            <style>
+                .gif-overlay {{
+                    position: fixed; inset: 0;
+                    background: rgba(0,0,0,0.6);
+                    display: flex; align-items: center; justify-content: center;
+                    z-index: 9999;
+                }}
+                .gif-overlay img {{
+                    max-width: 92vw; max-height: 92vh;
+                    border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+                }}
+            </style>
+            <div class="gif-overlay">
+                <img src="{st.session_state.gif_data_uri}" />
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        st.session_state.pop("show_gif_until", None)
+        st.session_state.pop("gif_data_uri", None)
 
 # Titre et date
 st.markdown(f"<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - {uap_selection}</h1>", unsafe_allow_html=True)
