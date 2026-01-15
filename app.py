@@ -134,7 +134,7 @@ end_date = next_month - timedelta(days=1)
 working_days = get_working_days(start_date, end_date)
 nb_days = len(working_days)
 
-# Objectif journalier
+# Objectif journalier initial
 pic_journalier = pic_prevu[mois_selectionne] / nb_days
 
 # Cumul attendu jusqu'à aujourd'hui
@@ -146,15 +146,27 @@ diff = pic_realise[mois_selectionne] - cumul_attendu
 color = "green" if diff >= 0 else "red"
 sign = "+" if diff >= 0 else "-"
 
+# --- Recalcul objectif journalier si retard ---
+days_remaining = len([d for d in working_days if d > today])
+if days_remaining > 0:
+    if diff < 0:  # retard
+        pic_journalier_recalc = (pic_prevu[mois_selectionne] + abs(diff)) / nb_days
+    else:  # avance ou à l'heure
+        pic_journalier_recalc = pic_journalier
+else:
+    pic_journalier_recalc = pic_journalier
+
 # Affichage stylé
 st.markdown(
     f"<p style='font-size:18px; font-weight:bold;'>"
     f"Objectif journalier : {pic_journalier:.1f} km²<br>"
+    f"Objectif journalier recalculé : {pic_journalier_recalc:.1f} km²<br>"
     f"Cumul attendu : {cumul_attendu:.1f} km²<br>"
     f"Écart : <span style='color:{color};'>{sign}{abs(diff):.1f} km²</span>"
     f"</p>",
     unsafe_allow_html=True
 )
+
 
 
 # Affichage des métriques
