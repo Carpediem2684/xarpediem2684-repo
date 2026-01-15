@@ -100,6 +100,63 @@ if st.session_state.gif_visible:
     st.image(GIF_PATH, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
+# --- Section Suivi Objectif Journalier ---
+st.markdown("### 📊 Suivi Objectif Journalier")
+
+from datetime import timedelta
+
+# Fonction pour calculer les jours ouvrés (lundi à vendredi)
+def get_working_days(start_date, end_date):
+    days = []
+    current = start_date
+    while current <= end_date:
+        if current.weekday() < 5:  # 0 = lundi, 4 = vendredi
+            days.append(current)
+        current += timedelta(days=1)
+    return days
+
+# Définir la date de début du mois
+today = datetime.today()
+if mois_selectionne.lower().startswith("jan"):  # Cas spécifique janvier
+    start_date = datetime(2026, 1, 5)
+else:
+    # Premier lundi du mois
+    first_day = datetime(today.year, today.month, 1)
+    while first_day.weekday() != 0:  # 0 = lundi
+        first_day += timedelta(days=1)
+    start_date = first_day
+
+# Dernier jour du mois
+next_month = datetime(today.year, today.month + 1, 1) if today.month < 12 else datetime(today.year + 1, 1, 1)
+end_date = next_month - timedelta(days=1)
+
+# Calcul des jours ouvrés
+working_days = get_working_days(start_date, end_date)
+nb_days = len(working_days)
+
+# Objectif journalier
+pic_journalier = pic_prevu[mois_selectionne] / nb_days
+
+# Cumul attendu jusqu'à aujourd'hui
+days_elapsed = len([d for d in working_days if d <= today])
+cumul_attendu = pic_journalier * days_elapsed
+
+# Comparaison avec PIC réalisé
+diff = pic_realise[mois_selectionne] - cumul_attendu
+color = "green" if diff >= 0 else "red"
+sign = "+" if diff >= 0 else "-"
+
+# Affichage stylé
+st.markdown(
+    f"<p style='font-size:18px; font-weight:bold;'>"
+    f"Objectif journalier : {pic_journalier:.1f} km²<br>"
+    f"Cumul attendu : {cumul_attendu:.1f} km²<br>"
+    f"Écart : <span style='color:{color};'>{sign}{abs(diff):.1f} km²</span>"
+    f"</p>",
+    unsafe_allow_html=True
+)
+
+
 # Affichage des métriques
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} km²")
@@ -230,54 +287,4 @@ fig_heatmap.update_layout(
 )
 
 st.plotly_chart(fig_heatmap, use_container_width=True)
-
-from datetime import timedelta
-
-# --- Calcul des jours ouvrés ---
-def get_working_days(start_date, end_date):
-    # Lundi à vendredi inclus
-    days = []
-    current = start_date
-    while current <= end_date:
-        if current.weekday() < 5:  # 0 = lundi, 4 = vendredi
-            days.append(current)
-        current += timedelta(days=1)
-    return days
-
-# Début du mois (premier lundi ou date spécifique pour janvier)
-today = datetime.today()
-if mois_selectionne == "Janvier":
-    start_date = datetime(2026, 1, 5)  # début spécifique
-else:
-    # Premier lundi du mois
-    first_day = datetime(today.year, today.month, 1)
-    while first_day.weekday() != 0:  # 0 = lundi
-        first_day += timedelta(days=1)
-    start_date = first_day
-
-# Fin du mois (dernier jour du mois)
-next_month = datetime(today.year, today.month + 1, 1) if today.month < 12 else datetime(today.year + 1, 1, 1)
-end_date = next_month - timedelta(days=1)
-
-working_days = get_working_days(start_date, end_date)
-nb_days = len(working_days)
-
-# --- Calcul PIC journalier ---
-pic_journalier = pic_prevu[mois_selectionne] / nb_days
-
-# --- Calcul cumul attendu ---
-days_elapsed = len([d for d in working_days if d <= today])
-cumul_attendu = pic_journalier * days_elapsed
-
-# --- Comparaison ---
-diff = pic_realise[mois_selectionne] - cumul_attendu
-color = "green" if diff >= 0 else "red"
-sign = "+" if diff >= 0 else "-"
-st.markdown(
-    f"<p style='font-size:18px; font-weight:bold;'>Objectif journalier : {pic_journalier:.1f} km²<br>"
-    f"Cumul attendu : {cumul_attendu:.1f} km²<br>"
-    f"Écart : <span style='color:{color};'>{sign}{abs(diff):.1f} km²</span></p>",
-    unsafe_allow_html=True
-)
-
 
