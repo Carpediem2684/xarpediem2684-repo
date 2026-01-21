@@ -176,7 +176,12 @@ if cols[0].button("🔄 Instant T"):
     st.session_state.bar_color = "darkblue"
 
 for i, campagne in enumerate(campagnes):
-    val = df.iloc[2:14, 25 + i].apply(pd.to_numeric, errors='coerce').fillna(0)[mois_selectionne]
+    
+# Utilisation de l'index positionnel
+index_pos = mois.index(mois_selectionne)
+val = df.iloc[2:14, 25 + i].apply(pd.to_numeric, errors='coerce').fillna(0).iloc[index_pos]
+
+
     if val > 0:
         clicked = st.session_state.get("campagne_clicks", {}).get(campagne, False)
         indicator = "🟢" if not clicked else "🔴"
