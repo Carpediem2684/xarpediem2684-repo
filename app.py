@@ -175,11 +175,12 @@ if cols[0].button("🔄 Instant T"):
     st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
     st.session_state.bar_color = "darkblue"
 
+
 for i, campagne in enumerate(campagnes):
-    
-# Utilisation de l'index positionnel
-index_pos = mois.index(mois_selectionne)
-val = df.iloc[2:14, 25 + i].apply(pd.to_numeric, errors='coerce').fillna(0).iloc[index_pos]
+    # Utilisation de l'index positionnel pour éviter KeyError
+    index_pos = mois.index(mois_selectionne)
+    val = df.iloc[2:14, 25 + i].apply(pd.to_numeric, errors='coerce').fillna(0).iloc[index_pos]
+
 
 
     if val > 0:
