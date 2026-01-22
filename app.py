@@ -103,69 +103,44 @@ if st.session_state.gif_visible:
 # --- Section Suivi Objectif Journalier ---
 st.markdown("### 📊 Suivi Objectif Journalier")
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 
-# Fonction pour calculer les jours ouvrés (lundi à vendredi)
-def get_working_days(start_date, end_date):
-    days = []
-    current = start_date
-    while current <= end_date:
-        if current.weekday() < 5:  # 0 = lundi, 4 = vendredi
-            days.append(current)
-        current += timedelta(days=1)
-    return days
+pic_total = pic_prevu[mois_selectionne]
+pic_realise_val = pic_realise[mois_selectionne]
+pic_restant = pic_total - pic_realise_val
 
-# Définir la date de début du mois
 today = datetime.today()
-if mois_selectionne.lower().startswith("jan"):  # Cas spécifique janvier
-    start_date = datetime(2026, 1, 5)
-else:
-    # Premier lundi du mois
-    first_day = datetime(today.year, today.month, 1)
-    while first_day.weekday() != 0:  # 0 = lundi
-        first_day += timedelta(days=1)
-    start_date = first_day
-
-# Dernier jour du mois
 next_month = datetime(today.year, today.month + 1, 1) if today.month < 12 else datetime(today.year + 1, 1, 1)
 end_date = next_month - timedelta(days=1)
 
-# Calcul des jours ouvrés
-working_days = get_working_days(start_date, end_date)
-nb_days = len(working_days)
+last_friday = end_date
+while last_friday.weekday() != 4:  # 4 = vendredi
+    last_friday -= timedelta(days=1)
 
-# Objectif journalier initial
-pic_journalier = pic_prevu[mois_selectionne] / nb_days
+jours_restants = 0
+current = today
+while current <= last_friday:
+    if current.weekday() < 5:
+        jours_restants += 1
+    current += timedelta(days=1)
 
-# Cumul attendu jusqu'à aujourd'hui
-days_elapsed = len([d for d in working_days if d <= today])
-cumul_attendu = pic_journalier * days_elapsed
+postes_restants = jours_restants * 2  # 2x8 par jour
 
-# Comparaison avec PIC réalisé
-diff = pic_realise[mois_selectionne] - cumul_attendu
-color = "green" if diff >= 0 else "red"
-sign = "+" if diff >= 0 else "-"
+objectif_par_poste = pic_restant / postes_restants if postes_restants > 0 else 0
+objectif_journalier = pic_restant / jours_restants if jours_restants > 0 else 0
 
-# --- Recalcul objectif journalier si retard ---
-days_remaining = len([d for d in working_days if d > today])
-if days_remaining > 0:
-    if diff < 0:  # retard
-        pic_journalier_recalc = (pic_prevu[mois_selectionne] + abs(diff)) / nb_days
-    else:  # avance ou à l'heure
-        pic_journalier_recalc = pic_journalier
-else:
-    pic_journalier_recalc = pic_journalier
+st.markdown("### 📊 Objectifs recalculés (dynamiques)")
+st.markdown(f"""
+- **PIC prévu** : {pic_total} km²  
+- **PIC réalisé** : {pic_realise_val} km²  
+- **PIC restant** : {pic_restant} km²  
+- **Jours restants (jusqu'à vendredi)** : {jours_restants}  
+- **Postes restants (2x8)** : {postes_restants}  
+- **Objectif par poste** : {objectif_par_poste:.1f} km²  
+- **Objectif journalier** : {objectif_journalier:.1f} km²  
+""")
 
-# Affichage stylé
-st.markdown(
-    f"<p style='font-size:18px; font-weight:bold;'>"
-    f"Objectif journalier : {pic_journalier:.1f} km²<br>"
-    f"Objectif journalier recalculé : {pic_journalier_recalc:.1f} km²<br>"
-    f"Cumul attendu : {cumul_attendu:.1f} km²<br>"
-    f"Écart : <span style='color:{color};'>{sign}{abs(diff):.1f} km²</span>"
-    f"</p>",
-    unsafe_allow_html=True
-)
+
 
 
 
