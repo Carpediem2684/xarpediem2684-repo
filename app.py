@@ -134,7 +134,7 @@ st.markdown(f"""
 - **PIC prévu** : {pic_total} km²  
 - **PIC réalisé** : {pic_realise_val} km²  
 - **PIC restant** : {pic_restant} km²  
-- **Jours restants (jusqu'à vendredi)** : {jours_restants}  
+- **Jours restants (jusqu'à la fin du mois)** : {jours_restants}  
 - **Postes restants (2x8)** : {postes_restants}  
 - **Objectif par poste** : {objectif_par_poste:.1f} km²  
 - **Objectif journalier** : {objectif_journalier:.1f} km²  
