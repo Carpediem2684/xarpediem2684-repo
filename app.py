@@ -187,6 +187,14 @@ with col_pie:
 with col_weekly:
     st.plotly_chart(fig_weekly, use_container_width=True)
 
+st.markdown(
+    "<div style='padding:10px; background-color:#ffdddd; border-left:5px solid red;'>"
+    "<p style='color:#a00000; font-size:20px; font-weight:bold; text-align:center;'>"
+    "⚠️ Section en phase de test : certaines données peuvent être inexactes."
+    "</p></div>",
+    unsafe_allow_html=True
+)
+
 # Campagnes restantes du mois avec indicateurs 🟢 et 🔴
 st.markdown("### Campagnes restantes du mois")
 cols = st.columns(len(campagnes) + 1)
