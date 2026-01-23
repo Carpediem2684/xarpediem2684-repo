@@ -195,54 +195,78 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Campagnes restantes du mois avec indicateurs 🟢 et 🔴
+
+# --- Section Campagnes restantes du mois ---
 st.markdown("### Campagnes restantes du mois")
 cols = st.columns(len(campagnes) + 1)
+
+# Bouton reset
 if cols[0].button("🔄 Instant T"):
     st.session_state.current_value = pic_realise[mois_selectionne]
     st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
     st.session_state.bar_color = "darkblue"
+    st.session_state.adjustments = {campagne: 0 for campagne in campagnes}
 
+# Initialisation des ajustements si non présents
+if "adjustments" not in st.session_state:
+    st.session_state.adjustments = {campagne: 0 for campagne in campagnes}
+
+# Affichage des boutons + champs d'ajustement
 for i, campagne in enumerate(campagnes):
     val = campagne_mois[campagne]
     if val > 0:
         clicked = st.session_state.campagne_clicks[campagne]
         indicator = "🟢" if not clicked else "🔴"
+
+        # Champ pour ajustement
+        adj = cols[i + 1].number_input(
+            f"Ajustement {campagne} (km²)", 
+            value=st.session_state.adjustments[campagne], 
+            step=10.0, 
+            format="%.1f"
+        )
+        st.session_state.adjustments[campagne] = adj
+
+        # Bouton campagne
         if cols[i + 1].button(f"{indicator} {campagne}"):
             if not clicked:
                 st.session_state.campagne_clicks[campagne] = True
-                st.session_state.current_value += val
+                st.session_state.current_value += val + adj
                 st.session_state.bar_color = couleurs_campagnes.get(campagne, "darkblue")
 
-# Jauge dynamique
+# ✅ Jauge dynamique
 fig_dynamic = go.Figure(go.Indicator(
     mode="gauge+number",
     value=st.session_state.current_value,
     title={'text': f"Progression PIC ({mois_selectionne})"},
     gauge={
-        'axis': {'range': [0, pic_prevu[mois_selectionne] * 1.2]},
+        'axis': {'range': [0, pic_prevus[mois_selectionne] * 1.2]},
         'bar': {'color': st.session_state.bar_color},
         'steps': [
-            {'range': [0, pic_prevu[mois_selectionne]*0.85], 'color': "lightgreen"},
-            {'range': [pic_prevu[mois_selectionne]*0.85, pic_prevu[mois_selectionne]], 'color': "yellow"},
-            {'range': [pic_prevu[mois_selectionne], pic_prevu[mois_selectionne]*1.2], 'color': "lightgrey"}
+            {'range': [0, pic_prevus[mois_selectionne]*0.85], 'color': "lightgreen"},
+            {'range': [pic_prevus[mois_selectionne]*0.85, pic_prevus[mois_selectionne]], 'color': "yellow"},
+            {'range': [pic_prevus[mois_selectionne], pic_prevus[mois_selectionne]*1.2], 'color': "lightgrey"}
         ],
         'threshold': {
             'line': {'color': "red", 'width': 4},
             'thickness': 0.75,
-            'value': pic_prevu[mois_selectionne]
+            'value': pic_prevus[mois_selectionne]
         }
     }
 ))
-
 st.plotly_chart(fig_dynamic, use_container_width=True)
 
-# Message de dépassement
-if st.session_state.current_value > pic_prevu[mois_selectionne]:
+# ✅ Message dépassement
+if st.session_state.current_value > pic_prevus[mois_selectionne]:
     st.markdown(
         f"<p style='color:red; font-size:18px; font-weight:bold;'>⚠ Dépassement du PIC prévu : {st.session_state.current_value} km²</p>",
         unsafe_allow_html=True
     )
+
+# ✅ Tableau des ajustements
+st.markdown("#### Ajustements appliqués")
+st.write(pd.DataFrame.from_dict(st.session_state.adjustments, orient='index', columns=['Ajustement (km²)']))
+
 
 # Heatmap
 campagne_data_heatmap = df.iloc[2:14, 6:14]
