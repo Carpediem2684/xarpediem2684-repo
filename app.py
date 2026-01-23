@@ -196,6 +196,7 @@ st.markdown(
 )
 
 
+
 # --- Section Campagnes restantes du mois ---
 st.markdown("### Campagnes restantes du mois")
 cols = st.columns(len(campagnes) + 1)
@@ -205,11 +206,11 @@ if cols[0].button("🔄 Instant T"):
     st.session_state.current_value = pic_realise[mois_selectionne]
     st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
     st.session_state.bar_color = "darkblue"
-    st.session_state.adjustments = {campagne: 0 for campagne in campagnes}
+    st.session_state.adjustments = {campagne: 0.0 for campagne in campagnes}  # ✅ float
 
 # Initialisation des ajustements si non présents
 if "adjustments" not in st.session_state:
-    st.session_state.adjustments = {campagne: 0 for campagne in campagnes}
+    st.session_state.adjustments = {campagne: 0.0 for campagne in campagnes}  # ✅ float
 
 # Affichage des boutons + champs d'ajustement
 for i, campagne in enumerate(campagnes):
@@ -218,11 +219,11 @@ for i, campagne in enumerate(campagnes):
         clicked = st.session_state.campagne_clicks[campagne]
         indicator = "🟢" if not clicked else "🔴"
 
-        # Champ pour ajustement
+        # Champ pour ajustement (conversion en float)
         adj = cols[i + 1].number_input(
-            f"Ajustement {campagne} (km²)", 
-            value=st.session_state.adjustments[campagne], 
-            step=10.0, 
+            f"Ajustement {campagne} (km²)",
+            value=float(st.session_state.adjustments[campagne]),
+            step=10.0,
             format="%.1f"
         )
         st.session_state.adjustments[campagne] = adj
@@ -266,7 +267,6 @@ if st.session_state.current_value > pic_prevus[mois_selectionne]:
 # ✅ Tableau des ajustements
 st.markdown("#### Ajustements appliqués")
 st.write(pd.DataFrame.from_dict(st.session_state.adjustments, orient='index', columns=['Ajustement (km²)']))
-
 
 # Heatmap
 campagne_data_heatmap = df.iloc[2:14, 6:14]
