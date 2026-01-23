@@ -241,24 +241,24 @@ fig_dynamic = go.Figure(go.Indicator(
     value=st.session_state.current_value,
     title={'text': f"Progression PIC ({mois_selectionne})"},
     gauge={
-        'axis': {'range': [0, pic_prevus[mois_selectionne] * 1.2]},
+        'axis': {'range': [0, pic_prevu[mois_selectionne] * 1.2]},
         'bar': {'color': st.session_state.bar_color},
         'steps': [
-            {'range': [0, pic_prevus[mois_selectionne]*0.85], 'color': "lightgreen"},
-            {'range': [pic_prevus[mois_selectionne]*0.85, pic_prevus[mois_selectionne]], 'color': "yellow"},
-            {'range': [pic_prevus[mois_selectionne], pic_prevus[mois_selectionne]*1.2], 'color': "lightgrey"}
+            {'range': [0, pic_prevu[mois_selectionne]*0.85], 'color': "lightgreen"},
+            {'range': [pic_prevu[mois_selectionne]*0.85, pic_prevu[mois_selectionne]], 'color': "yellow"},
+            {'range': [pic_prevu[mois_selectionne], pic_prevu[mois_selectionne]*1.2], 'color': "lightgrey"}
         ],
         'threshold': {
             'line': {'color': "red", 'width': 4},
             'thickness': 0.75,
-            'value': pic_prevus[mois_selectionne]
+            'value': pic_prevu[mois_selectionne]
         }
     }
 ))
 st.plotly_chart(fig_dynamic, use_container_width=True)
 
 # ✅ Message dépassement
-if st.session_state.current_value > pic_prevus[mois_selectionne]:
+if st.session_state.current_value > pic_prevu[mois_selectionne]:
     st.markdown(
         f"<p style='color:red; font-size:18px; font-weight:bold;'>⚠ Dépassement du PIC prévu : {st.session_state.current_value} km²</p>",
         unsafe_allow_html=True
