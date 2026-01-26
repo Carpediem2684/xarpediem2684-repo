@@ -142,7 +142,7 @@ while last_friday.weekday() != 4:  # 4 = vendredi
 # === Utilisation du calendrier réel pour calculer jours/postes restants ===
 
 # On filtre le calendrier entre aujourd'hui et le dernier vendredi du mois
-masque_periode = (df_cal['Jour'] >= today.date()) & (df_cal['Jour'] <= last_friday.date())
+masque_periode = (df_cal['Jour'] >= today) & (df_cal['Jour'] <= last_friday)
 df_cal_periode = df_cal[masque_periode]
 
 # Jours restants = nb de jours avec au moins un poste ouvert
