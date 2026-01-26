@@ -14,6 +14,28 @@ GIF_PATH = 'GIF_20251219_081101_562.gif'  # chemin local
 file_path = 'Essai appli dashboard (1).xlsx'
 df = pd.read_excel(file_path, sheet_name='2025', engine='openpyxl', header=None)
 
+# === Chargement du calendrier des postes ===
+calendrier_path = 'Calendrier 2026.xlsx'
+df_cal = pd.read_excel(calendrier_path, sheet_name='Feuil1', engine='openpyxl')
+
+# Renommer proprement les colonnes du calendrier
+df_cal.columns = [
+    'Jour',        # Date
+    'Horaire_1', 'Etat_1',
+    'Horaire_2', 'Etat_2',
+    'Horaire_3', 'Etat_3'
+]
+
+# Conversion de la colonne date au bon format
+df_cal['Jour'] = pd.to_datetime(df_cal['Jour'], dayfirst=True)
+
+# Calcul du nombre de postes ouverts par jour (0 à 3)
+df_cal['Postes_ouverts'] = (
+    (df_cal['Etat_1'] == 'OUVERT').astype(int) +
+    (df_cal['Etat_2'] == 'OUVERT').astype(int) +
+    (df_cal['Etat_3'] == 'OUVERT').astype(int)
+)
+
 # Initialisation
 mois = df.iloc[2:14, 0].tolist()
 campagnes = df.iloc[1, 25:34].tolist()  # Colonnes Z à AH incluses
@@ -117,25 +139,31 @@ last_friday = end_date
 while last_friday.weekday() != 4:  # 4 = vendredi
     last_friday -= timedelta(days=1)
 
-jours_restants = 0
-current = today
-while current <= last_friday:
-    if current.weekday() < 5:
-        jours_restants += 1
-    current += timedelta(days=1)
+# === Utilisation du calendrier réel pour calculer jours/postes restants ===
 
-postes_restants = jours_restants * 2  # 2x8 par jour
+# On filtre le calendrier entre aujourd'hui et le dernier vendredi du mois
+masque_periode = (df_cal['Jour'] >= today.date()) & (df_cal['Jour'] <= last_friday.date())
+df_cal_periode = df_cal[masque_periode]
 
+# Jours restants = nb de jours avec au moins un poste ouvert
+jours_restants = df_cal_periode.loc[df_cal_periode['Postes_ouverts'] > 0, 'Jour'].nunique()
+
+# Postes restants réels = somme des postes ouverts sur la période
+postes_restants = df_cal_periode['Postes_ouverts'].sum()
+
+# Objectifs recalculés
 objectif_par_poste = pic_restant / postes_restants if postes_restants > 0 else 0
 objectif_journalier = pic_restant / jours_restants if jours_restants > 0 else 0
+
+
 
 st.markdown("### 📊 Objectifs recalculés (dynamiques)")
 st.markdown(f"""
 - **PIC prévu** : {pic_total} km²  
 - **PIC réalisé** : {pic_realise_val} km²  
 - **PIC restant** : {pic_restant} km²  
-- **Jours restants (jusqu'à la fin du mois)** : {jours_restants}  
-- **Postes restants (2x8)** : {postes_restants}  
+- **Jours restants (avec au moins un poste ouvert)** : {jours_restants}  
+- **Postes restants (Réels)** : {postes_restants}  
 - **Objectif par poste** : {objectif_par_poste:.1f} km²  
 - **Objectif journalier** : {objectif_journalier:.1f} km²  
 """)
