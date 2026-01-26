@@ -127,46 +127,49 @@ st.markdown("### 📊 Suivi Objectif Journalier")
 
 from datetime import datetime, timedelta
 
+# Données PIC
 pic_total = pic_prevu[mois_selectionne]
 pic_realise_val = pic_realise[mois_selectionne]
 pic_restant = pic_total - pic_realise_val
 
-today = datetime.today()
+# Normalisation de la date du jour (pour inclure la journée en cours)
+today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+
+# Détermination de la fin de mois
 next_month = datetime(today.year, today.month + 1, 1) if today.month < 12 else datetime(today.year + 1, 1, 1)
 end_date = next_month - timedelta(days=1)
 
+# Trouver le dernier vendredi du mois
 last_friday = end_date
 while last_friday.weekday() != 4:  # 4 = vendredi
     last_friday -= timedelta(days=1)
 
-# === Utilisation du calendrier réel pour calculer jours/postes restants ===
-
-# On filtre le calendrier entre aujourd'hui et le dernier vendredi du mois
+# --- Utilisation du calendrier réel pour calculer jours/postes restants ---
 masque_periode = (df_cal['Jour'] >= today) & (df_cal['Jour'] <= last_friday)
 df_cal_periode = df_cal[masque_periode]
 
 # Jours restants = nb de jours avec au moins un poste ouvert
 jours_restants = df_cal_periode.loc[df_cal_periode['Postes_ouverts'] > 0, 'Jour'].nunique()
 
-# Postes restants réels = somme des postes ouverts sur la période
+# Postes restants = somme des postes ouverts sur la période
 postes_restants = df_cal_periode['Postes_ouverts'].sum()
 
-# Objectifs recalculés
+# Calculs des objectifs
 objectif_par_poste = pic_restant / postes_restants if postes_restants > 0 else 0
 objectif_journalier = pic_restant / jours_restants if jours_restants > 0 else 0
 
-
-
+# --- Affichage ---
 st.markdown("### 📊 Objectifs recalculés (dynamiques)")
 st.markdown(f"""
 - **PIC prévu** : {pic_total} km²  
 - **PIC réalisé** : {pic_realise_val} km²  
 - **PIC restant** : {pic_restant} km²  
 - **Jours restants (avec au moins un poste ouvert)** : {jours_restants}  
-- **Postes restants (Réels)** : {postes_restants}  
+- **Postes restants (réels)** : {postes_restants}  
 - **Objectif par poste** : {objectif_par_poste:.1f} km²  
-- **Objectif journalier** : {objectif_journalier:.1f} km²  
+- **Objectif journalier moyen** : {objectif_journalier:.1f} km²  
 """)
+
 
 
 
