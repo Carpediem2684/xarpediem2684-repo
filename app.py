@@ -173,7 +173,7 @@ with right_panel:
             border-radius: 12px; padding: 14px 16px; color: #ffffff;">
             <div style="display:flex; align-items:center; justify-content:space-between;">
                 <div style="font-weight:700; font-size:18px;">
-                    ⚠️ Soucis de cylindre
+                    ⚠️ Cylindres hors service
                 </div>
                 <div style="
                     background:#FFB200; color:#1b1b1b; font-weight:700;
