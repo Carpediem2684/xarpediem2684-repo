@@ -13,7 +13,30 @@ GIF_PATH = 'GIF_20251219_081101_562.gif'  # chemin local
 # Chargement des données
 file_path = 'Essai appli dashboard (1).xlsx'
 df = pd.read_excel(file_path, sheet_name='2025', engine='openpyxl', header=None)
+# === Soucis de cylindre : extraction dynamique AJ–AM (AJ2:AM++) ===
+# Cartographie colonnes (A=0) : AJ=36, AK=37, AL=38, AM=39
+col_aj, col_ak, col_al, col_am = 36, 37, 38, 39
 
+# On prend large sur les lignes (2→50) puis on filtre celles vides
+issues_raw = df.iloc[1:50, [col_aj, col_ak, col_al, col_am]].copy()
+issues_raw.columns = ["Cylindre", "Délai", "Retour prévu", "Impact client"]
+
+# Garde uniquement les lignes où un cylindre est renseigné
+issues = issues_raw[issues_raw["Cylindre"].notna()].copy()
+
+# Normalise la date (AL) si présente
+issues["Retour prévu"] = pd.to_datetime(issues["Retour prévu"], errors="coerce", dayfirst=True)
+
+# Format d’affichage (jj/mm/aaaa) ; garde NaT en blanc
+issues["Retour prévu (aff.)"] = issues["Retour prévu"].dt.strftime("%d/%m/%Y")
+
+# Classement : la plus proche en premier, puis celles sans date
+issues = issues.sort_values(by=["Retour prévu"], na_position="last").reset_index(drop=True)
+
+# KPIs rapides
+nb_cylindres = len(issues)
+prochaine_date = issues["Retour prévu"].dropna().min()
+prochaine_date_aff = prochaine_date.strftime("%d/%m/%Y") if pd.notna(prochaine_date) else "—"
 # === Chargement du calendrier des postes ===
 calendrier_path = 'Calendrier 2026.xlsx'
 df_cal = pd.read_excel(calendrier_path, sheet_name='Feuil1', engine='openpyxl')
@@ -103,7 +126,47 @@ couleurs_campagnes = {
 st.markdown(f"<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - {uap_selection}</h1>", unsafe_allow_html=True)
 date_du_jour = datetime.today().strftime('%d/%m/%Y')
 st.markdown(f"<p style='text-align:right; font-size:16px; font-weight:bold;'>Date du jour : {date_du_jour}</p>", unsafe_allow_html=True)
+# === Encadré "Soucis de cylindre" – haut à droite ===
+left_spacer, right_panel = st.columns([3, 2])  # Ajuste le ratio si besoin
 
+with right_panel:
+    st.markdown(
+        """
+        <div style="
+            background: linear-gradient(135deg, #0F1730 0%, #1E2B57 100%);
+            border: 1px solid #23315f;
+            border-radius: 12px; padding: 14px 16px; color: #ffffff;">
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+                <div style="font-weight:700; font-size:18px;">
+                    ⚠️ Soucis de cylindre
+                </div>
+                <div style="
+                    background:#FFB200; color:#1b1b1b; font-weight:700;
+                    padding:4px 10px; border-radius:999px; font-size:12px;">
+                    {badge}
+                </div>
+            </div>
+            <div style="margin-top:8px; font-size:13px; opacity:0.9;">
+                Prochaine date de retour prévue : <b>{next_back}</b>
+            </div>
+        </div>
+        """.format(
+            badge=f"{nb_cylindres} en cours" if nb_cylindres else "Aucun",
+            next_back=prochaine_date_aff
+        ),
+        unsafe_allow_html=True
+    )
+
+    if nb_cylindres:
+        # Tableau compact pour lecture rapide
+        cols_aff = ["Cylindre", "Délai", "Retour prévu (aff.)", "Impact client"]
+        st.dataframe(
+            issues[cols_aff].rename(columns={"Retour prévu (aff.)": "Retour prévu"}),
+            use_container_width=True,
+            hide_index=True
+        )
+    else:
+        st.info("Aucun souci de cylindre en cours ✅")
 # --- Bouton Félicitations (au-dessus des métriques) ---
 col_btn = st.container()
 with col_btn:
