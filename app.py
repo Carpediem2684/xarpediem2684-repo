@@ -13,24 +13,33 @@ GIF_PATH = 'GIF_20251219_081101_562.gif'  # chemin local
 # Chargement des données
 file_path = 'Essai appli dashboard (1).xlsx'
 df = pd.read_excel(file_path, sheet_name='2025', engine='openpyxl', header=None)
-# === Soucis de cylindre : extraction dynamique AJ–AM (AJ2:AM++) ===
-# Cartographie colonnes (A=0) : AJ=36, AK=37, AL=38, AM=39
-col_aj, col_ak, col_al, col_am = 36, 37, 38, 39
+# === Soucis de cylindre : extraction robuste AJ–AM via usecols ===
+# ⚠️ On relit UNIQUEMENT le sous-tableau AJ:AM pour éviter les index hors limites
+issues_raw = pd.read_excel(
+    file_path,
+    sheet_name='2025',     # adapte si ta feuille s’appelle autrement
+    engine='openpyxl',
+    usecols="AJ:AM",       # lit AJ, AK, AL, AM (4 colonnes)
+    header=None
+)
 
-# On prend large sur les lignes (2→50) puis on filtre celles vides
-issues_raw = df.iloc[1:50, [col_aj, col_ak, col_al, col_am]].copy()
+# Les lignes utiles commencent à partir de la ligne 2 Excel => on saute la 1ère ligne
+# On prend large (1→49) puis on filtrera avec le contenu de la colonne AJ
+issues_raw = issues_raw.iloc[1:50, :].copy()
+
+# Renomme proprement
 issues_raw.columns = ["Cylindre", "Délai", "Retour prévu", "Impact client"]
 
 # Garde uniquement les lignes où un cylindre est renseigné
 issues = issues_raw[issues_raw["Cylindre"].notna()].copy()
 
-# Normalise la date (AL) si présente
+# Normalise la date (AL)
 issues["Retour prévu"] = pd.to_datetime(issues["Retour prévu"], errors="coerce", dayfirst=True)
 
-# Format d’affichage (jj/mm/aaaa) ; garde NaT en blanc
+# Colonne d'affichage de la date
 issues["Retour prévu (aff.)"] = issues["Retour prévu"].dt.strftime("%d/%m/%Y")
 
-# Classement : la plus proche en premier, puis celles sans date
+# Trie par date de retour (les NaT passent en bas)
 issues = issues.sort_values(by=["Retour prévu"], na_position="last").reset_index(drop=True)
 
 # KPIs rapides
