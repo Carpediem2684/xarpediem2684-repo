@@ -2,6 +2,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
+from openpyxl import load_workbook
 from datetime import datetime
 
 st.set_page_config(page_title='Dashboard PIC', layout='wide')
@@ -13,39 +14,64 @@ GIF_PATH = 'GIF_20251219_081101_562.gif'  # chemin local
 # Chargement des données
 file_path = 'Essai appli dashboard (1).xlsx'
 df = pd.read_excel(file_path, sheet_name='2025', engine='openpyxl', header=None)
-# === Soucis de cylindre : extraction robuste AJ–AM via usecols ===
-# ⚠️ On relit UNIQUEMENT le sous-tableau AJ:AM pour éviter les index hors limites
-issues_raw = pd.read_excel(
-    file_path,
-    sheet_name='2025',     # adapte si ta feuille s’appelle autrement
-    engine='openpyxl',
-    usecols="AJ:AM",       # lit AJ, AK, AL, AM (4 colonnes)
-    header=None
-)
+# === Soucis de cylindre via openpyxl : lecture robuste d'AJ à AM ===
+try:
+    wb = load_workbook(file_path, data_only=True)
 
-# Les lignes utiles commencent à partir de la ligne 2 Excel => on saute la 1ère ligne
-# On prend large (1→49) puis on filtrera avec le contenu de la colonne AJ
-issues_raw = issues_raw.iloc[1:50, :].copy()
+    # On cible la feuille "2025" si elle existe, sinon on prend la 1ère
+    sheet_name_cyl = '2025'
+    if sheet_name_cyl not in wb.sheetnames:
+        sheet_name_cyl = wb.sheetnames[0]
 
-# Renomme proprement
-issues_raw.columns = ["Cylindre", "Délai", "Retour prévu", "Impact client"]
+    ws = wb[sheet_name_cyl]
 
-# Garde uniquement les lignes où un cylindre est renseigné
-issues = issues_raw[issues_raw["Cylindre"].notna()].copy()
+    # Colonnes Excel -> index openpyxl (A=1) : AJ=36, AK=37, AL=38, AM=39
+    COL_AJ, COL_AK, COL_AL, COL_AM = 36, 37, 38, 39
 
-# Normalise la date (AL)
-issues["Retour prévu"] = pd.to_datetime(issues["Retour prévu"], errors="coerce", dayfirst=True)
+    rows_list = []
+    # On parcourt de la ligne 2 jusqu'à la fin de la feuille
+    for r in range(2, ws.max_row + 1):
+        cylindre = ws.cell(row=r, column=COL_AJ).value  # AJ
+        delai    = ws.cell(row=r, column=COL_AK).value  # AK
+        retour   = ws.cell(row=r, column=COL_AL).value  # AL
+        impact   = ws.cell(row=r, column=COL_AM).value  # AM
 
-# Colonne d'affichage de la date
-issues["Retour prévu (aff.)"] = issues["Retour prévu"].dt.strftime("%d/%m/%Y")
+        # Ignore les lignes où le cylindre n'est pas renseigné
+        if cylindre is None or (isinstance(cylindre, str) and cylindre.strip() == ""):
+            continue
 
-# Trie par date de retour (les NaT passent en bas)
-issues = issues.sort_values(by=["Retour prévu"], na_position="last").reset_index(drop=True)
+        rows_list.append({
+            "Cylindre": cylindre,
+            "Délai": delai,
+            "Retour prévu": retour,
+            "Impact client": impact
+        })
 
-# KPIs rapides
-nb_cylindres = len(issues)
-prochaine_date = issues["Retour prévu"].dropna().min()
-prochaine_date_aff = prochaine_date.strftime("%d/%m/%Y") if pd.notna(prochaine_date) else "—"
+    # Conversion en DataFrame pandas
+    issues = pd.DataFrame(rows_list)
+
+    if not issues.empty:
+        # Normalise la date (AL)
+        issues["Retour prévu"] = pd.to_datetime(issues["Retour prévu"], errors="coerce", dayfirst=True)
+        # Colonne pour affichage
+        issues["Retour prévu (aff.)"] = issues["Retour prévu"].dt.strftime("%d/%m/%Y")
+        # Tri par date de retour (les NaT passent en bas)
+        issues = issues.sort_values(by=["Retour prévu"], na_position="last").reset_index(drop=True)
+
+        # KPIs
+        nb_cylindres = len(issues)
+        prochaine_date = issues["Retour prévu"].dropna().min()
+        prochaine_date_aff = prochaine_date.strftime("%d/%m/%Y") if pd.notna(prochaine_date) else "—"
+    else:
+        nb_cylindres = 0
+        prochaine_date_aff = "—"
+
+except Exception as e:
+    # Repli propre si jamais la lecture échoue
+    issues = pd.DataFrame(columns=["Cylindre", "Délai", "Retour prévu (aff.)", "Impact client"])
+    nb_cylindres = 0
+    prochaine_date_aff = "—"
+    st.warning(f"Impossible de lire AJ:AM (soucis de cylindre). Détail : {e}")
 # === Chargement du calendrier des postes ===
 calendrier_path = 'Calendrier 2026.xlsx'
 df_cal = pd.read_excel(calendrier_path, sheet_name='Feuil1', engine='openpyxl')
