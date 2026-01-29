@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
-from openpyxl import load_workbook
 
 # Pas de st.set_page_config ici : il est déjà dans app.py
 
@@ -14,75 +13,18 @@ def show_dashboard_pic():
     # Chargement des données
     file_path = 'Essai appli dashboard (1).xlsx'
     df = pd.read_excel(file_path, sheet_name='2025', engine='openpyxl', header=None)
-    # === Soucis de cylindre via openpyxl : lecture robuste d'AJ à AM ===
-    try:
-        wb = load_workbook(file_path, data_only=True)
 
-     # On cible la feuille "2025" si elle existe, sinon on prend la 1ère
-        sheet_name_cyl = '2025'
-        if sheet_name_cyl not in wb.sheetnames:
-            sheet_name_cyl = wb.sheetnames[0]
-
-        ws = wb[sheet_name_cyl]
-
-        # Colonnes Excel -> index openpyxl (A=1) : AJ=36, AK=37, AL=38, AM=39
-        COL_AJ, COL_AK, COL_AL, COL_AM = 36, 37, 38, 39
-
-        rows_list = []
-        # On parcourt de la ligne 2 jusqu'à la fin de la feuille
-        for r in range(2, ws.max_row + 1):
-            cylindre = ws.cell(row=r, column=COL_AJ).value  # AJ
-            delai    = ws.cell(row=r, column=COL_AK).value  # AK
-            retour   = ws.cell(row=r, column=COL_AL).value  # AL
-            impact   = ws.cell(row=r, column=COL_AM).value  # AM
-
-            # Ignore les lignes où le cylindre n'est pas renseigné
-            if cylindre is None or (isinstance(cylindre, str) and cylindre.strip() == ""):
-            continue
-
-            rows_list.append({
-                "Cylindre": cylindre,
-                "Délai": delai,
-                "Retour prévu": retour,
-                "Impact client": impact
-        })
-
-        # Conversion en DataFrame pandas
-        issues = pd.DataFrame(rows_list)
-
-        if not issues.empty:
-            # Normalise la date (AL)
-            issues["Retour prévu"] = pd.to_datetime(issues["Retour prévu"], errors="coerce", dayfirst=True)
-            # Colonne pour affichage
-            issues["Retour prévu (aff.)"] = issues["Retour prévu"].dt.strftime("%d/%m/%Y")
-            # Tri par date de retour (les NaT passent en bas)
-            issues = issues.sort_values(by=["Retour prévu"], na_position="last").reset_index(drop=True)
-
-            # KPIs
-            nb_cylindres = len(issues)
-            prochaine_date = issues["Retour prévu"].dropna().min()
-            prochaine_date_aff = prochaine_date.strftime("%d/%m/%Y") if pd.notna(prochaine_date) else "—"
-        else:
-            nb_cylindres = 0
-            prochaine_date_aff = "—"
-
-    except Exception as e:
-        # Repli propre si jamais la lecture échoue
-        issues = pd.DataFrame(columns=["Cylindre", "Délai", "Retour prévu (aff.)", "Impact client"])
-        nb_cylindres = 0
-        prochaine_date_aff = "—"
-        st.warning(f"Impossible de lire AJ:AM (soucis de cylindre). Détail : {e}")
     # === Chargement du calendrier des postes ===
     calendrier_path = 'Calendrier 2026.xlsx'
     df_cal = pd.read_excel(calendrier_path, sheet_name='Feuil1', engine='openpyxl')
 
     # Renommer proprement les colonnes du calendrier
     df_cal.columns = [
-        'Jour',        # Date
+        'Jour',  # Date
         'Horaire_1', 'Etat_1',
         'Horaire_2', 'Etat_2',
         'Horaire_3', 'Etat_3'
-]
+    ]
 
     # Conversion de la colonne date au bon format
     df_cal['Jour'] = pd.to_datetime(df_cal['Jour'], dayfirst=True)
@@ -92,13 +34,20 @@ def show_dashboard_pic():
         (df_cal['Etat_1'] == 'OUVERT').astype(int) +
         (df_cal['Etat_2'] == 'OUVERT').astype(int) +
         (df_cal['Etat_3'] == 'OUVERT').astype(int)
-)
+    )
 
     # Initialisation
     mois = df.iloc[2:14, 0].tolist()
     campagnes = df.iloc[1, 25:34].tolist()  # Colonnes Z à AH incluses
-    pic_realise = pd.Series(pd.to_numeric(df.iloc[2:14, 1], errors='coerce').fillna(0).astype(int).values, index=mois)
-    pic_prevu = pd.Series(pd.to_numeric(df.iloc[2:14, 2], errors='coerce').fillna(0).astype(int).values, index=mois)
+
+    pic_realise = pd.Series(
+        pd.to_numeric(df.iloc[2:14, 1], errors='coerce').fillna(0).astype(int).values,
+        index=mois
+    )
+    pic_prevu = pd.Series(
+        pd.to_numeric(df.iloc[2:14, 2], errors='coerce').fillna(0).astype(int).values,
+        index=mois
+    )
     ruptures = int(df.iloc[1, 16])
 
     # Taux d'adhérence global (W2)
@@ -109,7 +58,10 @@ def show_dashboard_pic():
     adherence_s1 = pd.to_numeric(df.iloc[1, 19], errors='coerce')
 
     # Sidebar
-    st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Logo_Gerflor.svg/2560px-Logo_Gerflor.svg.png", width=150)
+    st.sidebar.image(
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Logo_Gerflor.svg/2560px-Logo_Gerflor.svg.png",
+        width=150
+    )
     st.sidebar.title("Sélection UAP")
     uap_selection = st.sidebar.selectbox("Choisir une UAP", ["4M", "2M", "P2000", "KLAM"])
     mois_selectionne = st.sidebar.selectbox("Choisir un mois", mois)
@@ -124,7 +76,9 @@ def show_dashboard_pic():
     weekly_data = df.iloc[2:51, [21, 22]]
     weekly_data.columns = ["Semaine", "Taux d'adhérence"]
     weekly_data.dropna(inplace=True)
-    weekly_data["Taux d'adhérence"] = pd.to_numeric(weekly_data["Taux d'adhérence"], errors="coerce")
+    weekly_data["Taux d'adhérence"] = pd.to_numeric(
+        weekly_data["Taux d'adhérence"], errors="coerce"
+    )
     weekly_data["Taux d'adhérence"] = (weekly_data["Taux d'adhérence"] * 100).round(1)
     weekly_data["Semaine"] = weekly_data["Semaine"].astype(int)
     semaines_completes = list(range(1, 51))
@@ -134,93 +88,58 @@ def show_dashboard_pic():
     if "gif_visible" not in st.session_state:
         st.session_state.gif_visible = False
     if "mois_selectionne" not in st.session_state:
-      st.session_state.mois_selectionne = mois_selectionne
+        st.session_state.mois_selectionne = mois_selectionne
+
     if "current_value" not in st.session_state or st.session_state.mois_selectionne != mois_selectionne:
-     # Reset de l'état au changement de mois
-     st.session_state.current_value = pic_realise[mois_selectionne]
-     st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
-     st.session_state.mois_selectionne = mois_selectionne
-     st.session_state.bar_color = "darkblue"
-    # On masque le GIF au changement de mois
-     st.session_state.gif_visible = False
+        # Reset de l'état au changement de mois
+        st.session_state.current_value = pic_realise[mois_selectionne]
+        st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
+        st.session_state.mois_selectionne = mois_selectionne
+        st.session_state.bar_color = "darkblue"
+        # On masque le GIF au changement de mois
+        st.session_state.gif_visible = False
 
     # Définir les couleurs pour chaque campagne
     couleurs_campagnes = {
-     campagnes[0]: "green",
-     campagnes[1]: "purple",
-     campagnes[2]: "orange",
-     campagnes[3]: "pink",
-     campagnes[4]: "cyan",
-     campagnes[5]: "brown",
-     campagnes[6]: "blue",
-     campagnes[7]: "magenta",
-     campagnes[8]: "lime"
-}
+        campagnes[0]: "green",
+        campagnes[1]: "purple",
+        campagnes[2]: "orange",
+        campagnes[3]: "pink",
+        campagnes[4]: "cyan",
+        campagnes[5]: "brown",
+        campagnes[6]: "blue",
+        campagnes[7]: "magenta",
+        campagnes[8]: "lime"
+    }
 
-# Titre et date
-    st.markdown(f"<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - {uap_selection}</h1>", unsafe_allow_html=True)
+    # Titre et date
+    st.markdown(
+        f"<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - {uap_selection}</h1>",
+        unsafe_allow_html=True
+    )
     date_du_jour = datetime.today().strftime('%d/%m/%Y')
-    st.markdown(f"<p style='text-align:right; font-size:16px; font-weight:bold;'>Date du jour : {date_du_jour}</p>", unsafe_allow_html=True)
-    # === Encadré "Soucis de cylindre" – haut à droite ===
-    left_spacer, right_panel = st.columns([3, 2])  # Ajuste le ratio si besoin
-
-    with right_panel:
-        st.markdown(
-        """
-        <div style="
-            background: linear-gradient(135deg, #0F1730 0%, #1E2B57 100%);
-            border: 1px solid #23315f;
-            border-radius: 12px; padding: 14px 16px; color: #ffffff;">
-            <div style="display:flex; align-items:center; justify-content:space-between;">
-                <div style="font-weight:700; font-size:18px;">
-                    ⚠️ Cylindres hors service
-                </div>
-                <div style="
-                    background:#FFB200; color:#1b1b1b; font-weight:700;
-                    padding:4px 10px; border-radius:999px; font-size:12px;">
-                    {badge}
-                </div>
-            </div>
-            <div style="margin-top:8px; font-size:13px; opacity:0.9;">
-                Prochaine date de retour prévue : <b>{next_back}</b>
-            </div>
-        </div>
-        """.format(
-            badge=f"{nb_cylindres} en cours" if nb_cylindres else "Aucun",
-            next_back=prochaine_date_aff
-        ),
+    st.markdown(
+        f"<p style='text-align:right; font-size:16px; font-weight:bold;'>Date du jour : {date_du_jour}</p>",
         unsafe_allow_html=True
     )
 
-    if nb_cylindres:
-        # Tableau compact pour lecture rapide
-        cols_aff = ["Cylindre", "Délai", "Retour prévu (aff.)", "Impact client"]
-        st.dataframe(
-            issues[cols_aff].rename(columns={"Retour prévu (aff.)": "Retour prévu"}),
-            use_container_width=True,
-            hide_index=True
-        )
-    else:
-        st.info("Aucun souci de cylindre en cours ✅")
     # --- Bouton Félicitations (au-dessus des métriques) ---
-col_btn = st.container()
+    col_btn = st.container()
     with col_btn:
-     if pic_realise[mois_selectionne] > pic_prevu[mois_selectionne]:
-        # Libellé dynamique
-        label = "🎉 Félicitations (afficher le GIF)" if not st.session_state.gif_visible else "❌ Masquer le GIF"
-        if st.button(label):
-            st.session_state.gif_visible = not st.session_state.gif_visible
-    else:
-        # Rien n'apparaît si pas de dépassement
-        pass
+        if pic_realise[mois_selectionne] > pic_prevu[mois_selectionne]:
+            # Libellé dynamique
+            label = "🎉 Félicitations (afficher le GIF)" if not st.session_state.gif_visible else "❌ Masquer le GIF"
+            if st.button(label):
+                st.session_state.gif_visible = not st.session_state.gif_visible
+        else:
+            # Rien n'apparaît si pas de dépassement
+            pass
 
     # Affichage du GIF en grand si gif_visible == True
     if st.session_state.gif_visible:
-     st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
-     st.image(GIF_PATH, use_container_width=True)
-     st.markdown("</div>", unsafe_allow_html=True)
-
-
+        st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
+        st.image(GIF_PATH, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     # --- Section Suivi Objectif Journalier ---
     st.markdown("### 📊 Suivi Objectif Journalier")
