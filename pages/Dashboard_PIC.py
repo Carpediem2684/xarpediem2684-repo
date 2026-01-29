@@ -13,6 +13,66 @@ def show_dashboard_pic():
     # Chargement des données
     file_path = 'Essai appli dashboard (1).xlsx'
     df = pd.read_excel(file_path, sheet_name='2025', engine='openpyxl', header=None)
+    # === Soucis de cylindre via openpyxl : lecture robuste d'AJ à AM ===
+    try:
+        wb = load_workbook(file_path, data_only=True)
+
+        # On cible la feuille "2025" si elle existe, sinon on prend la 1ère
+        sheet_name_cyl = '2025'
+        if sheet_name_cyl not in wb.sheetnames:
+            sheet_name_cyl = wb.sheetnames[0]
+
+        ws = wb[sheet_name_cyl]
+
+        # Colonnes Excel -> index openpyxl (A=1) : AJ=36, AK=37, AL=38, AM=39
+        COL_AJ, COL_AK, COL_AL, COL_AM = 36, 37, 38, 39
+
+        rows_list = []
+        # On parcourt de la ligne 2 jusqu'à la fin de la feuille
+        for r in range(2, ws.max_row + 1):
+            cylindre = ws.cell(row=r, column=COL_AJ).value  # AJ
+            delai    = ws.cell(row=r, column=COL_AK).value  # AK
+            retour   = ws.cell(row=r, column=COL_AL).value  # AL
+            impact   = ws.cell(row=r, column=COL_AM).value  # AM
+
+            # Ignore les lignes où le cylindre n'est pas renseigné
+            if cylindre is None or (isinstance(cylindre, str) and cylindre.strip() == ""):
+                continue
+
+            rows_list.append({
+                "Cylindre": cylindre,
+                "Délai": delai,
+                "Retour prévu": retour,
+                "Impact client": impact
+            })
+
+        # Conversion en DataFrame pandas
+        issues = pd.DataFrame(rows_list)
+
+        if not issues.empty:
+            # Normalise la date (AL)
+            issues["Retour prévu"] = pd.to_datetime(
+                issues["Retour prévu"], errors="coerce", dayfirst=True
+            )
+            # Colonne pour affichage
+            issues["Retour prévu (aff.)"] = issues["Retour prévu"].dt.strftime("%d/%m/%Y")
+            # Tri par date de retour (les NaT passent en bas)
+            issues = issues.sort_values(by=["Retour prévu"], na_position="last").reset_index(drop=True)
+
+            # KPIs
+            nb_cylindres = len(issues)
+            prochaine_date = issues["Retour prévu"].dropna().min()
+            prochaine_date_aff = prochaine_date.strftime("%d/%m/%Y") if pd.notna(prochaine_date) else "—"
+        else:
+            nb_cylindres = 0
+            prochaine_date_aff = "—"
+
+    except Exception as e:
+        # Repli propre si jamais la lecture échoue
+        issues = pd.DataFrame(columns=["Cylindre", "Délai", "Retour prévu (aff.)", "Impact client"])
+        nb_cylindres = 0
+        prochaine_date_aff = "—"
+        st.warning(f"Impossible de lire AJ:AM (soucis de cylindre). Détail : {e}")
 
     # === Chargement du calendrier des postes ===
     calendrier_path = 'Calendrier 2026.xlsx'
@@ -122,6 +182,47 @@ def show_dashboard_pic():
         f"<p style='text-align:right; font-size:16px; font-weight:bold;'>Date du jour : {date_du_jour}</p>",
         unsafe_allow_html=True
     )
+    # === Encadré "Soucis de cylindre" – haut à droite ===
+    left_spacer, right_panel = st.columns([3, 2])  # Ajuste le ratio si besoin
+
+    with right_panel:
+        st.markdown(
+            """
+            <div style="
+                background: linear-gradient(135deg, #0F1730 0%, #1E2B57 100%);
+                border: 1px solid #23315f;
+                border-radius: 12px; padding: 14px 16px; color: #ffffff;">
+                <div style="display:flex; align-items:center; justify-content:space-between;">
+                    <div style="font-weight:700; font-size:18px;">
+                        ⚠️ Cylindres hors service
+                    </div>
+                    <div style="
+                        background:#FFB200; color:#1b1b1b; font-weight:700;
+                        padding:4px 10px; border-radius:999px; font-size:12px;">
+                        {badge}
+                    </div>
+                </div>
+                <div style="margin-top:8px; font-size:13px; opacity:0.9;">
+                    Prochaine date de retour prévue : <b>{next_back}</b>
+                </div>
+            </div>
+            """.format(
+                badge=f"{nb_cylindres} en cours" if nb_cylindres else "Aucun",
+                next_back=prochaine_date_aff
+            ),
+            unsafe_allow_html=True
+        )
+
+        if nb_cylindres:
+            # Tableau compact pour lecture rapide
+            cols_aff = ["Cylindre", "Délai", "Retour prévu (aff.)", "Impact client"]
+            st.dataframe(
+                issues[cols_aff].rename(columns={"Retour prévu (aff.)": "Retour prévu"}),
+                use_container_width=True,
+                hide_index=True
+            )
+        else:
+            st.info("Aucun souci de cylindre en cours ✅")
 
     # --- Bouton Félicitations (au-dessus des métriques) ---
     col_btn = st.container()
