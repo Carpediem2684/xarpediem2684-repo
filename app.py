@@ -12,66 +12,6 @@ page = st.session_state["page"]
 #     PAGE D’ACCUEIL DESIGN
 # ============================
 
-# === STYLE DU GROS BOUTON MENU ===
-st.markdown("""
-    <style>
-    .menu-wrapper {
-        width:100%;
-        display:flex;
-        justify-content:center;
-        margin-top:30px;
-    }
-
-    .menu-btn {
-        background: linear-gradient(90deg, #1F8FFF, #6EC6FF);
-        padding: 22px 60px;
-        border-radius: 14px;
-        font-size: 32px;
-        font-weight: 900;
-        color: white;
-        text-align: center;
-        cursor: pointer;
-        transition: 0.25s ease;
-        box-shadow: 0px 0px 18px rgba(31,143,255,0.6);
-    }
-
-    .menu-btn:hover {
-        transform: scale(1.07);
-        box-shadow: 0px 0px 28px rgba(110,198,255,1);
-    }
-
-    .hidden-btn {
-        display:none;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# Div HTML du gros bouton MENU
-st.markdown(
-    "<div class='menu-wrapper'><div class='menu-btn' id='menuDiv'>MENU</div></div>",
-    unsafe_allow_html=True
-)
-
-# Bouton "caché" Streamlit
-clicked = st.button("MENU_hidden", key="menu_hidden", help="hidden")
-
-# Script JS pour relier le div HTML au bouton Streamlit
-st.markdown("""
-    <script>
-    const div = window.parent.document.getElementById('menuDiv');
-    const hidden = window.parent.document.querySelector('button[title="hidden"]');
-    if (div && hidden) {
-        div.onclick = () => { hidden.click(); };
-    }
-    </script>
-""", unsafe_allow_html=True)
-
-if clicked:
-    st.session_state["page"] = "menu"
-
-# ============================
-#     PAGE HOME
-# ============================
 if page == "home":
 
     # --- STYLE GLOBAL ---
@@ -126,6 +66,36 @@ if page == "home":
             transform: scale(1.03);
             box-shadow: 0 0 18px #6EC6FF;
         }
+
+        /* STYLE DU GROS BOUTON MENU (qu’on met en bas) */
+        .menu-wrapper {
+            width:100%;
+            display:flex;
+            justify-content:center;
+            margin-top:30px;
+        }
+
+        .menu-btn {
+            background: linear-gradient(90deg, #1F8FFF, #6EC6FF);
+            padding: 22px 60px;
+            border-radius: 14px;
+            font-size: 32px;
+            font-weight: 900;
+            color: white;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.25s ease;
+            box-shadow: 0px 0px 18px rgba(31,143,255,0.6);
+        }
+
+        .menu-btn:hover {
+            transform: scale(1.07);
+            box-shadow: 0px 0px 28px rgba(110,198,255,1);
+        }
+
+        .hidden-btn {
+            display:none;
+        }
         </style>
     """, unsafe_allow_html=True)
 
@@ -144,48 +114,35 @@ if page == "home":
         st.session_state["uap_selection"] = uap
 
         st.write("")
-
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # --- BOUTON MENU STYLE PREMIUM ---
+    # ================================
+    #   GROS BOUTON MENU EN BAS
+    # ================================
+
+    # Div HTML du gros bouton MENU (en bas)
+    st.markdown(
+        "<div class='menu-wrapper'><div class='menu-btn' id='menuDiv'>MENU</div></div>",
+        unsafe_allow_html=True
+    )
+
+    # Bouton "caché" Streamlit, utilisé pour changer la page
+    clicked = st.button("MENU_hidden", key="menu_hidden", help="hidden")
+
+    # Script JS pour relier le div HTML au bouton Streamlit
     st.markdown("""
-        <style>
-        .menu-btn {
-            width: 100%;
-            background: linear-gradient(90deg, #6EC6FF, #1F8FFF);
-            padding: 18px;
-            border-radius: 14px;
-            border: none;
-            font-size: 28px;
-            font-weight: 800;
-            color: white;
-            letter-spacing: 1px;
-            cursor: pointer;
-            transition: all 0.25s ease-out;
-            text-align: center;
+        <script>
+        const iframeDoc = window.parent.document;
+        const div = iframeDoc.getElementById('menuDiv');
+        const hidden = iframeDoc.querySelector('button[title="hidden"]');
+        if (div && hidden) {
+            div.onclick = () => { hidden.click(); };
         }
-
-        .menu-btn:hover {
-            transform: scale(1.06);
-            box-shadow: 0 0 25px rgba(110,198,255,0.8);
-        }
-
-        .menu-wrapper {
-            display: flex;
-            justify-content: center;
-            margin-top: 25px;
-        }
-        </style>
+        </script>
     """, unsafe_allow_html=True)
 
-    # Wrapper centré
-    st.markdown("<div class='menu-wrapper'>", unsafe_allow_html=True)
-
-    # Le bouton Streamlit (qui bascule sur la page menu)
-    if st.button("MENU", key="big_menu_btn"):
+    if clicked:
         st.session_state["page"] = "menu"
-
-    st.markdown("</div>", unsafe_allow_html=True)
 
 # ============================
 #     PAGE MENU (inchangée)
