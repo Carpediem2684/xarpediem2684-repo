@@ -29,9 +29,10 @@ if page == "home":
     st.write("")
 
     # Bouton Entrer -> va au Menu
-    if st.button("➡️ Entrer", use_container_width=True):
-        st.session_state["page"] = "menu"
-        st.experimental_rerun()
+    
+if st.button("➡️ Entrer", use_container_width=True):
+    st.markdown("<meta http-equiv='refresh' content='0; url=./Menu'/>", unsafe_allow_html=True)
+
 
 # --- PAGE MENU ---
 elif page == "menu":
