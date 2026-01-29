@@ -23,33 +23,29 @@ def show_menu():
 
     # Dashboard PIC
     with col1:
-        if st.button("📊 Dashboard PIC", use_container_width=True):
-            st.session_state["page"] = "dashboard_pic"
-            st.experimental_rerun()
+        if st.button("📊 Dashboard PIC"):
+    st.markdown("<meta http-equiv='refresh' content='0; url=./Dashboard_PIC'/>", unsafe_allow_html=True)
 
     # Planning L1
     with col2:
-        if st.button("🏭 Planning Ligne 1", use_container_width=True):
-            st.session_state["page"] = "planning_l1"
-            st.experimental_rerun()
+        if st.button("🏭 Planning Ligne 1"):
+    st.markdown("<meta http-equiv='refresh' content='0; url=./Planning_L1'/>", unsafe_allow_html=True)
+
 
     # Planning Imprimerie
     with col3:
-        if st.button("🖨️ Planning Imprimerie", use_container_width=True):
-            st.session_state["page"] = "planning_imprimerie"
-            st.experimental_rerun()
+        if st.button("🖨️ Planning Imprimerie"):
+    st.markdown("<meta http-equiv='refresh' content='0; url=./Planning_Imprimerie'/>", unsafe_allow_html=True)
 
     # Planning Ligne 2
     with col4:
-        if st.button("⚙️ Planning Ligne 2", use_container_width=True):
-            st.session_state["page"] = "planning_l2"
-            st.experimental_rerun()
+        if st.button("🖨️ Planning Ligne 2"):
+    st.markdown("<meta http-equiv='refresh' content='0; url=./Planning_L2'/>", unsafe_allow_html=True)
 
     # Planning Visitage
     with col5:
-        if st.button("🔍 Planning Visitage", use_container_width=True):
-            st.session_state["page"] = "planning_visitage"
-            st.experimental_rerun()
+        if st.button("🖨️ Planning Imprimerie"):
+    st.markdown("<meta http-equiv='refresh' content='0; url=./Planning_Visitage'/>", unsafe_allow_html=True)
 
     st.write("")
     if st.button("⬅️ Retour à l'accueil", use_container_width=True):
