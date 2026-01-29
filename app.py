@@ -24,4 +24,4 @@ st.write("")
 
 # Bouton Entrer
 if st.button("➡️ Entrer", use_container_width=True):
-    st.switch_page("pages/Menu.py")
+    st.switch_page("Menu")
