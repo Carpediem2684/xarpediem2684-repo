@@ -13,7 +13,7 @@ page = st.session_state["page"]
 # ============================
 
 # === STYLE DU GROS BOUTON MENU ===
-    st.markdown("""
+st.markdown("""
         <style>
         .menu-wrapper {
             width:100%;
