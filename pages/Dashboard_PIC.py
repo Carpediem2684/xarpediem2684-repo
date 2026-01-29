@@ -13,6 +13,32 @@ def show_dashboard_pic():
     # Chargement des données
     file_path = 'Essai appli dashboard (1).xlsx'
     df = pd.read_excel(file_path, sheet_name='2025', engine='openpyxl', header=None)
+    # === Lecture robuste des cylindres AJ → AM (contournement cellules HS) ===
+    try:
+        wb = load_workbook(file_path, data_only=True)
+        ws = wb["2025"]
+
+        # Colonnes AJ à AM → index 36 à 39
+        cyl_values = []
+        for col in range(36, 40):  # AJ=36, AK=37, AL=38, AM=39 (0-based openpyxl)
+            col_data = []
+            for row in range(3, 15):  # lignes 3 à 14 (comme ton tableau mensuel)
+                cell_value = ws.cell(row=row, column=col).value
+                if cell_value is None or cell_value == "":
+                    cell_value = 0
+                try:
+                    col_data.append(float(cell_value))
+                except:
+                    col_data.append(0)  # si cellule HS
+            cyl_values.append(col_data)
+
+        # Conversion en DataFrame (optionnel)
+        df_cylindres = pd.DataFrame(cyl_values).T
+        df_cylindres.columns = ["AJ", "AK", "AL", "AM"]
+
+    except Exception as e:
+        st.warning(f"⚠️ Impossible de lire les colonnes AJ–AM (cylindres HS) : {e}")
+        df_cylindres = pd.DataFrame(columns=["AJ", "AK", "AL", "AM"])
 
     # === Chargement du calendrier des postes ===
     calendrier_path = 'Calendrier 2026.xlsx'
