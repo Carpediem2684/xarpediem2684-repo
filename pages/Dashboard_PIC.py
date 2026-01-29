@@ -14,32 +14,65 @@ def show_dashboard_pic():
     # Chargement des données
     file_path = 'Essai appli dashboard (1).xlsx'
     df = pd.read_excel(file_path, sheet_name='2025', engine='openpyxl', header=None)
-    # === Lecture robuste des cylindres AJ → AM (contournement cellules HS) ===
-    try:
-        wb = load_workbook(file_path, data_only=True)
-        ws = wb["2025"]
+    # === Soucis de cylindre via openpyxl : lecture robuste d'AJ à AM ===
+try:
+    wb = load_workbook(file_path, data_only=True)
 
-        # Colonnes AJ à AM → index 36 à 39
-        cyl_values = []
-        for col in range(36, 40):  # AJ=36, AK=37, AL=38, AM=39 (0-based openpyxl)
-            col_data = []
-            for row in range(3, 15):  # lignes 3 à 14 (comme ton tableau mensuel)
-                cell_value = ws.cell(row=row, column=col).value
-                if cell_value is None or cell_value == "":
-                    cell_value = 0
-                try:
-                    col_data.append(float(cell_value))
-                except:
-                    col_data.append(0)  # si cellule HS
-            cyl_values.append(col_data)
+    # On cible la feuille "2025" si elle existe, sinon on prend la 1ère
+    sheet_name_cyl = '2025'
+    if sheet_name_cyl not in wb.sheetnames:
+        sheet_name_cyl = wb.sheetnames[0]
 
-        # Conversion en DataFrame (optionnel)
-        df_cylindres = pd.DataFrame(cyl_values).T
-        df_cylindres.columns = ["AJ", "AK", "AL", "AM"]
+    ws = wb[sheet_name_cyl]
 
-    except Exception as e:
-        st.warning(f"⚠️ Impossible de lire les colonnes AJ–AM (cylindres HS) : {e}")
-        df_cylindres = pd.DataFrame(columns=["AJ", "AK", "AL", "AM"])
+    # Colonnes Excel -> index openpyxl (A=1) : AJ=36, AK=37, AL=38, AM=39
+    COL_AJ, COL_AK, COL_AL, COL_AM = 36, 37, 38, 39
+
+    rows_list = []
+    # On parcourt de la ligne 2 jusqu'à la fin de la feuille
+    for r in range(2, ws.max_row + 1):
+        cylindre = ws.cell(row=r, column=COL_AJ).value  # AJ
+        delai    = ws.cell(row=r, column=COL_AK).value  # AK
+        retour   = ws.cell(row=r, column=COL_AL).value  # AL
+        impact   = ws.cell(row=r, column=COL_AM).value  # AM
+
+        # Ignore les lignes où le cylindre n'est pas renseigné
+        if cylindre is None or (isinstance(cylindre, str) and cylindre.strip() == ""):
+            continue
+
+        rows_list.append({
+            "Cylindre": cylindre,
+            "Délai": delai,
+            "Retour prévu": retour,
+            "Impact client": impact
+        })
+
+    # Conversion en DataFrame pandas
+    issues = pd.DataFrame(rows_list)
+
+    if not issues.empty:
+        # Normalise la date (AL)
+        issues["Retour prévu"] = pd.to_datetime(issues["Retour prévu"], errors="coerce", dayfirst=True)
+        # Colonne pour affichage
+        issues["Retour prévu (aff.)"] = issues["Retour prévu"].dt.strftime("%d/%m/%Y")
+        # Tri par date de retour (les NaT passent en bas)
+        issues = issues.sort_values(by=["Retour prévu"], na_position="last").reset_index(drop=True)
+
+        # KPIs
+        nb_cylindres = len(issues)
+        prochaine_date = issues["Retour prévu"].dropna().min()
+        prochaine_date_aff = prochaine_date.strftime("%d/%m/%Y") if pd.notna(prochaine_date) else "—"
+    else:
+        nb_cylindres = 0
+        prochaine_date_aff = "—"
+
+except Exception as e:
+    # Repli propre si jamais la lecture échoue
+    issues = pd.DataFrame(columns=["Cylindre", "Délai", "Retour prévu (aff.)", "Impact client"])
+    nb_cylindres = 0
+    prochaine_date_aff = "—"
+    st.warning(f"Impossible de lire AJ:AM (soucis de cylindre). Détail : {e}")
+
 
     # === Chargement du calendrier des postes ===
     calendrier_path = 'Calendrier 2026.xlsx'
