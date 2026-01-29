@@ -11,6 +11,55 @@ page = st.session_state["page"]
 # ============================
 #     PAGE D’ACCUEIL DESIGN
 # ============================
+
+# === STYLE DU GROS BOUTON MENU ===
+    st.markdown("""
+        <style>
+        .menu-wrapper {
+            width:100%;
+            display:flex;
+            justify-content:center;
+            margin-top:30px;
+        }
+
+        .menu-btn {
+            background: linear-gradient(90deg, #1F8FFF, #6EC6FF);
+            padding: 22px 60px;
+            border-radius: 14px;
+            font-size: 32px;
+            font-weight: 900;
+            color: white;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.25s ease;
+            box-shadow: 0px 0px 18px rgba(31,143,255,0.6);
+        }
+
+        .menu-btn:hover {
+            transform: scale(1.07);
+            box-shadow: 0px 0px 28px rgba(110,198,255,1);
+        }
+
+        .hidden-btn {
+            display:none;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<div class='menu-wrapper'><div class='menu-btn' id='menuDiv'>MENU</div></div>", unsafe_allow_html=True)
+
+    clicked = st.button("MENU_hidden", key="menu_hidden", help="hidden")
+
+    st.markdown("""
+        <script>
+        const div = document.getElementById('menuDiv');
+        const hidden = window.parent.document.querySelector('button[title="hidden"]');
+        div.onclick = () => { hidden.click(); };
+        </script>
+    """, unsafe_allow_html=True)
+
+    if clicked:
+        st.session_state["page"] = "menu"
 if page == "home":
 
     # --- STYLE GLOBAL ---
