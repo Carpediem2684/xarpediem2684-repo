@@ -18,7 +18,7 @@ def show_dashboard_pic():
 try:
     wb = load_workbook(file_path, data_only=True)
 
-    # On cible la feuille "2025" si elle existe, sinon on prend la 1ère
+ # On cible la feuille "2025" si elle existe, sinon on prend la 1ère
     sheet_name_cyl = '2025'
     if sheet_name_cyl not in wb.sheetnames:
         sheet_name_cyl = wb.sheetnames[0]
@@ -72,134 +72,155 @@ except Exception as e:
     nb_cylindres = 0
     prochaine_date_aff = "—"
     st.warning(f"Impossible de lire AJ:AM (soucis de cylindre). Détail : {e}")
+# === Chargement du calendrier des postes ===
+calendrier_path = 'Calendrier 2026.xlsx'
+df_cal = pd.read_excel(calendrier_path, sheet_name='Feuil1', engine='openpyxl')
 
+# Renommer proprement les colonnes du calendrier
+df_cal.columns = [
+    'Jour',        # Date
+    'Horaire_1', 'Etat_1',
+    'Horaire_2', 'Etat_2',
+    'Horaire_3', 'Etat_3'
+]
 
-    # === Chargement du calendrier des postes ===
-    calendrier_path = 'Calendrier 2026.xlsx'
-    df_cal = pd.read_excel(calendrier_path, sheet_name='Feuil1', engine='openpyxl')
+# Conversion de la colonne date au bon format
+df_cal['Jour'] = pd.to_datetime(df_cal['Jour'], dayfirst=True)
 
-    # Renommer proprement les colonnes du calendrier
-    df_cal.columns = [
-        'Jour',  # Date
-        'Horaire_1', 'Etat_1',
-        'Horaire_2', 'Etat_2',
-        'Horaire_3', 'Etat_3'
-    ]
+# Calcul du nombre de postes ouverts par jour (0 à 3)
+df_cal['Postes_ouverts'] = (
+    (df_cal['Etat_1'] == 'OUVERT').astype(int) +
+    (df_cal['Etat_2'] == 'OUVERT').astype(int) +
+    (df_cal['Etat_3'] == 'OUVERT').astype(int)
+)
 
-    # Conversion de la colonne date au bon format
-    df_cal['Jour'] = pd.to_datetime(df_cal['Jour'], dayfirst=True)
+# Initialisation
+mois = df.iloc[2:14, 0].tolist()
+campagnes = df.iloc[1, 25:34].tolist()  # Colonnes Z à AH incluses
+pic_realise = pd.Series(pd.to_numeric(df.iloc[2:14, 1], errors='coerce').fillna(0).astype(int).values, index=mois)
+pic_prevu = pd.Series(pd.to_numeric(df.iloc[2:14, 2], errors='coerce').fillna(0).astype(int).values, index=mois)
+ruptures = int(df.iloc[1, 16])
 
-    # Calcul du nombre de postes ouverts par jour (0 à 3)
-    df_cal['Postes_ouverts'] = (
-        (df_cal['Etat_1'] == 'OUVERT').astype(int) +
-        (df_cal['Etat_2'] == 'OUVERT').astype(int) +
-        (df_cal['Etat_3'] == 'OUVERT').astype(int)
-    )
+# Taux d'adhérence global (W2)
+raw_adherence = pd.to_numeric(df.iloc[1, 22], errors='coerce')
+taux_adherence = (raw_adherence * 100) if pd.notna(raw_adherence) else 0
 
-    # Initialisation
-    mois = df.iloc[2:14, 0].tolist()
-    campagnes = df.iloc[1, 25:34].tolist()  # Colonnes Z à AH incluses
+# Taux d'adhérence S-1 (T2)
+adherence_s1 = pd.to_numeric(df.iloc[1, 19], errors='coerce')
 
-    pic_realise = pd.Series(
-        pd.to_numeric(df.iloc[2:14, 1], errors='coerce').fillna(0).astype(int).values,
-        index=mois
-    )
-    pic_prevu = pd.Series(
-        pd.to_numeric(df.iloc[2:14, 2], errors='coerce').fillna(0).astype(int).values,
-        index=mois
-    )
-    ruptures = int(df.iloc[1, 16])
+# Sidebar
+st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Logo_Gerflor.svg/2560px-Logo_Gerflor.svg.png", width=150)
+st.sidebar.title("Sélection UAP")
+uap_selection = st.sidebar.selectbox("Choisir une UAP", ["4M", "2M", "P2000", "KLAM"])
+mois_selectionne = st.sidebar.selectbox("Choisir un mois", mois)
 
-    # Taux d'adhérence global (W2)
-    raw_adherence = pd.to_numeric(df.iloc[1, 22], errors='coerce')
-    taux_adherence = (raw_adherence * 100) if pd.notna(raw_adherence) else 0
+# Données campagnes (Z à AH)
+campagne_data = df.iloc[2:14, 25:34]
+campagne_data.columns = campagnes
+campagne_data.index = mois
+campagne_mois = campagne_data.loc[mois_selectionne].apply(pd.to_numeric, errors='coerce').fillna(0)
 
-    # Taux d'adhérence S-1 (T2)
-    adherence_s1 = pd.to_numeric(df.iloc[1, 19], errors='coerce')
+# Données hebdomadaires
+weekly_data = df.iloc[2:51, [21, 22]]
+weekly_data.columns = ["Semaine", "Taux d'adhérence"]
+weekly_data.dropna(inplace=True)
+weekly_data["Taux d'adhérence"] = pd.to_numeric(weekly_data["Taux d'adhérence"], errors="coerce")
+weekly_data["Taux d'adhérence"] = (weekly_data["Taux d'adhérence"] * 100).round(1)
+weekly_data["Semaine"] = weekly_data["Semaine"].astype(int)
+semaines_completes = list(range(1, 51))
+colors = ["green" if val >= 85 else "red" for val in weekly_data["Taux d'adhérence"]]
 
-    # Sidebar
-    st.sidebar.image(
-        "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Logo_Gerflor.svg/2560px-Logo_Gerflor.svg.png",
-        width=150
-    )
-    st.sidebar.title("Sélection UAP")
-    uap_selection = st.sidebar.selectbox("Choisir une UAP", ["4M", "2M", "P2000", "KLAM"])
-    mois_selectionne = st.sidebar.selectbox("Choisir un mois", mois)
+# --- État session pour le bouton Félicitations ---
+if "gif_visible" not in st.session_state:
+    st.session_state.gif_visible = False
+if "mois_selectionne" not in st.session_state:
+    st.session_state.mois_selectionne = mois_selectionne
+if "current_value" not in st.session_state or st.session_state.mois_selectionne != mois_selectionne:
+    # Reset de l'état au changement de mois
+    st.session_state.current_value = pic_realise[mois_selectionne]
+    st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
+    st.session_state.mois_selectionne = mois_selectionne
+    st.session_state.bar_color = "darkblue"
+    # On masque le GIF au changement de mois
+    st.session_state.gif_visible = False
 
-    # Données campagnes (Z à AH)
-    campagne_data = df.iloc[2:14, 25:34]
-    campagne_data.columns = campagnes
-    campagne_data.index = mois
-    campagne_mois = campagne_data.loc[mois_selectionne].apply(pd.to_numeric, errors='coerce').fillna(0)
+# Définir les couleurs pour chaque campagne
+couleurs_campagnes = {
+    campagnes[0]: "green",
+    campagnes[1]: "purple",
+    campagnes[2]: "orange",
+    campagnes[3]: "pink",
+    campagnes[4]: "cyan",
+    campagnes[5]: "brown",
+    campagnes[6]: "blue",
+    campagnes[7]: "magenta",
+    campagnes[8]: "lime"
+}
 
-    # Données hebdomadaires
-    weekly_data = df.iloc[2:51, [21, 22]]
-    weekly_data.columns = ["Semaine", "Taux d'adhérence"]
-    weekly_data.dropna(inplace=True)
-    weekly_data["Taux d'adhérence"] = pd.to_numeric(
-        weekly_data["Taux d'adhérence"], errors="coerce"
-    )
-    weekly_data["Taux d'adhérence"] = (weekly_data["Taux d'adhérence"] * 100).round(1)
-    weekly_data["Semaine"] = weekly_data["Semaine"].astype(int)
-    semaines_completes = list(range(1, 51))
-    colors = ["green" if val >= 85 else "red" for val in weekly_data["Taux d'adhérence"]]
+# Titre et date
+st.markdown(f"<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - {uap_selection}</h1>", unsafe_allow_html=True)
+date_du_jour = datetime.today().strftime('%d/%m/%Y')
+st.markdown(f"<p style='text-align:right; font-size:16px; font-weight:bold;'>Date du jour : {date_du_jour}</p>", unsafe_allow_html=True)
+# === Encadré "Soucis de cylindre" – haut à droite ===
+left_spacer, right_panel = st.columns([3, 2])  # Ajuste le ratio si besoin
 
-    # --- État session pour le bouton Félicitations ---
-    if "gif_visible" not in st.session_state:
-        st.session_state.gif_visible = False
-    if "mois_selectionne" not in st.session_state:
-        st.session_state.mois_selectionne = mois_selectionne
-
-    if "current_value" not in st.session_state or st.session_state.mois_selectionne != mois_selectionne:
-        # Reset de l'état au changement de mois
-        st.session_state.current_value = pic_realise[mois_selectionne]
-        st.session_state.campagne_clicks = {campagne: False for campagne in campagnes}
-        st.session_state.mois_selectionne = mois_selectionne
-        st.session_state.bar_color = "darkblue"
-        # On masque le GIF au changement de mois
-        st.session_state.gif_visible = False
-
-    # Définir les couleurs pour chaque campagne
-    couleurs_campagnes = {
-        campagnes[0]: "green",
-        campagnes[1]: "purple",
-        campagnes[2]: "orange",
-        campagnes[3]: "pink",
-        campagnes[4]: "cyan",
-        campagnes[5]: "brown",
-        campagnes[6]: "blue",
-        campagnes[7]: "magenta",
-        campagnes[8]: "lime"
-    }
-
-    # Titre et date
+with right_panel:
     st.markdown(
-        f"<h1 style='text-align:center; color:#ffffff;'>Dashboard PIC - {uap_selection}</h1>",
+        """
+        <div style="
+            background: linear-gradient(135deg, #0F1730 0%, #1E2B57 100%);
+            border: 1px solid #23315f;
+            border-radius: 12px; padding: 14px 16px; color: #ffffff;">
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+                <div style="font-weight:700; font-size:18px;">
+                    ⚠️ Cylindres hors service
+                </div>
+                <div style="
+                    background:#FFB200; color:#1b1b1b; font-weight:700;
+                    padding:4px 10px; border-radius:999px; font-size:12px;">
+                    {badge}
+                </div>
+            </div>
+            <div style="margin-top:8px; font-size:13px; opacity:0.9;">
+                Prochaine date de retour prévue : <b>{next_back}</b>
+            </div>
+        </div>
+        """.format(
+            badge=f"{nb_cylindres} en cours" if nb_cylindres else "Aucun",
+            next_back=prochaine_date_aff
+        ),
         unsafe_allow_html=True
     )
-    date_du_jour = datetime.today().strftime('%d/%m/%Y')
-    st.markdown(
-        f"<p style='text-align:right; font-size:16px; font-weight:bold;'>Date du jour : {date_du_jour}</p>",
-        unsafe_allow_html=True
-    )
 
-    # --- Bouton Félicitations (au-dessus des métriques) ---
-    col_btn = st.container()
-    with col_btn:
-        if pic_realise[mois_selectionne] > pic_prevu[mois_selectionne]:
-            # Libellé dynamique
-            label = "🎉 Félicitations (afficher le GIF)" if not st.session_state.gif_visible else "❌ Masquer le GIF"
-            if st.button(label):
-                st.session_state.gif_visible = not st.session_state.gif_visible
-        else:
-            # Rien n'apparaît si pas de dépassement
-            pass
+    if nb_cylindres:
+        # Tableau compact pour lecture rapide
+        cols_aff = ["Cylindre", "Délai", "Retour prévu (aff.)", "Impact client"]
+        st.dataframe(
+            issues[cols_aff].rename(columns={"Retour prévu (aff.)": "Retour prévu"}),
+            use_container_width=True,
+            hide_index=True
+        )
+    else:
+        st.info("Aucun souci de cylindre en cours ✅")
+# --- Bouton Félicitations (au-dessus des métriques) ---
+col_btn = st.container()
+with col_btn:
+    if pic_realise[mois_selectionne] > pic_prevu[mois_selectionne]:
+        # Libellé dynamique
+        label = "🎉 Félicitations (afficher le GIF)" if not st.session_state.gif_visible else "❌ Masquer le GIF"
+        if st.button(label):
+            st.session_state.gif_visible = not st.session_state.gif_visible
+    else:
+        # Rien n'apparaît si pas de dépassement
+        pass
 
-    # Affichage du GIF en grand si gif_visible == True
-    if st.session_state.gif_visible:
-        st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
-        st.image(GIF_PATH, use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+# Affichage du GIF en grand si gif_visible == True
+if st.session_state.gif_visible:
+    st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
+    st.image(GIF_PATH, use_container_width=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
 
     # --- Section Suivi Objectif Journalier ---
     st.markdown("### 📊 Suivi Objectif Journalier")
