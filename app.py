@@ -83,10 +83,47 @@ if page == "home":
         st.session_state["uap_selection"] = uap
 
         st.write("")
-        if st.button("➡️ Entrer", key="enter_btn"):
-            st.session_state["page"] = "menu"
+        # --- BOUTON MENU STYLE PREMIUM ---
+    st.markdown("""
+        <style>
+        .menu-btn {
+            width: 100%;
+            background: linear-gradient(90deg, #6EC6FF, #1F8FFF);
+            padding: 18px;
+            border-radius: 14px;
+            border: none;
+            font-size: 28px;
+            font-weight: 800;
+            color: white;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.25s ease-out;
+            text-align: center;
+        }
 
-        st.markdown("</div>", unsafe_allow_html=True)
+        .menu-btn:hover {
+            transform: scale(1.06);
+            box-shadow: 0 0 25px rgba(110,198,255,0.8);
+        }
+
+        .menu-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-top: 25px;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Wrapper centré
+    st.markdown("<div class='menu-wrapper'>", unsafe_allow_html=True)
+
+    # Le bouton
+    if st.button("MENU", key="big_menu_btn"):
+        st.session_state["page"] = "menu"
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+        
 
 # ============================
 #     PAGE MENU (inchangée)
