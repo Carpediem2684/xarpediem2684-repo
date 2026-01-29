@@ -8,6 +8,29 @@ from openpyxl import load_workbook
 
 
 def show_dashboard_pic():
+    # === Bouton retour menu ===
+    st.markdown("""
+        <style>
+        .back-btn {
+            background: #1F3C88;
+            color: white;
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor:pointer;
+            transition: 0.2s;
+        }
+        .back-btn:hover {
+            background: #2750C4;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    col_back, _ = st.columns([1, 5])
+    with col_back:
+        if st.button("⬅️ Retour Menu"):
+            st.session_state["page"] = "menu"
+            return
     # === Paramètres GIF ===
     GIF_PATH = 'GIF_20251219_081101_562.gif'  # chemin local
 
