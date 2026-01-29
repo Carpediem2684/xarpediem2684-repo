@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
+from openpyxl import load_workbook
 
 # Pas de st.set_page_config ici : il est déjà dans app.py
 
