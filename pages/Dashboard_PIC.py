@@ -8,6 +8,7 @@ from openpyxl import load_workbook
 
 
 def show_dashboard_pic():
+    st.error("🔥 DEBUG : CECI EST LE Dashboard_PIC.py QUE TU VIENS DE MODIFIER 🔥")
     # === Bouton retour menu ===
     st.markdown("""
         <style>
