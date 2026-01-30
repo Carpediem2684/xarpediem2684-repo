@@ -1,7 +1,7 @@
 import streamlit as st
 
 def show_menu():
-    st.error("🔥 TEST : Ceci est le NOUVEAU Menu.py ! 🔥")
+    
     # Récupération de l'UAP choisie sur la page d'accueil
     uap = st.session_state.get("uap_selection", "4M")
 
