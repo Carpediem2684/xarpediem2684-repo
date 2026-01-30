@@ -136,6 +136,11 @@ def show_dashboard_pic():
     
     # En-cours Visitage : cellule Q4
     en_cours_visitage = pd.to_numeric(df.iloc[3, 16], errors="coerce")
+    
+    # DEBUG TEMPORAIRE
+    st.write("DEBUG – Q4 brut :", df.iloc[3, 16])
+    st.write("DEBUG – En-cours Visitage (numérique) :", en_cours_visitage)
+
 
     # Taux d'adhérence global (W2)
     raw_adherence = pd.to_numeric(df.iloc[1, 22], errors='coerce')
