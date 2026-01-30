@@ -1,5 +1,5 @@
 import streamlit as st
-def show_Planning_Visitage():
+def show_planning_visitage():
     st.title("🔍 Planning visitage – UAP 4M")
     st.write("Page en cours de construction...")
 
