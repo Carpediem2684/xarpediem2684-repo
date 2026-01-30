@@ -9,11 +9,10 @@ from openpyxl import load_workbook
 
 def show_dashboard_pic():
     
-    st.title("🔥 DASHBOARD_PIC : VERSION DEBUG 🔥")
-    st.write("Si tu vois ce message, c'est BIEN ce fichier-là qui tourne sur Streamlit Cloud.")
-
-    if st.button("⬅️ Retour Menu"):
-        st.session_state["page"] = "menu"
+    def show_dashboard_pic():
+    st.title("🔥 GROS DEBUG 🔥")
+    st.write("Si tu vois ce message, c'est CE fichier qui tourne.")
+    st.stop()  # on bloque tout le reste de la fonction pour le test
 
     # === Bouton retour menu ===
     st.markdown("""
