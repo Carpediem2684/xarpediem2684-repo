@@ -1,6 +1,6 @@
 import streamlit as st
 
-def show_Planning_Imprimerie():
+def show_planning_imprimerie():
     st.title("🏭 Planning Ligne Imprimerie – UAP 4M")
     st.write("Page en cours de construction...")
 
