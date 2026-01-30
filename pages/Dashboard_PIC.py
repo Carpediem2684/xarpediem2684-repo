@@ -133,6 +133,9 @@ def show_dashboard_pic():
         index=mois
     )
     ruptures = int(df.iloc[1, 16])
+    
+    # En-cours Visitage : cellule Q4
+    en_cours_visitage = pd.to_numeric(df.iloc[3, 16], errors="coerce")
 
     # Taux d'adhérence global (W2)
     raw_adherence = pd.to_numeric(df.iloc[1, 22], errors='coerce')
@@ -317,10 +320,26 @@ def show_dashboard_pic():
 
     # Affichage des métriques
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} km²")
+
+    # Colonne 1 : PIC + En-cours Visitage
+    with col1:
+        st.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} km²")
+        if pd.notna(en_cours_visitage):
+            st.write(f"En-cours Visitage : **{en_cours_visitage:.1f} km²**")
+        else:
+            st.write("En-cours Visitage : N/A")
+
+    # Colonne 2 : PIC prévu
     col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} km²")
+
+    # Colonne 3 : ruptures
     col3.metric("Ruptures cette semaine", f"{ruptures}")
-    col4.metric("Taux d'adhérence S-1", f"{adherence_s1:.1f}%" if pd.notna(adherence_s1) else "N/A")
+
+    # Colonne 4 : adhérence S-1
+    col4.metric(
+        "Taux d'adhérence S-1",
+        f"{adherence_s1:.1f}%" if pd.notna(adherence_s1) else "N/A"
+    )
 
     # Graphiques côte à côte
     campagne_labels = df.iloc[1, 6:14].tolist()
