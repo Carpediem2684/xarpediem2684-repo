@@ -340,18 +340,11 @@ def show_dashboard_pic():
     """)
 
     
-    # Affichage des métriques
-    col1, col2, col3, col4 = st.columns(4)
+    # Affichage des métriques (on ajoute En-cours Visitage comme 5ᵉ KPI)
+    col1, col2, col3, col4, col5 = st.columns(5)
 
-    # Colonne 1 : PIC + En-cours Visitage
-    with col1:
-        st.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} km²")
-
-        if (en_cours_visitage is not None) and (not pd.isna(en_cours_visitage)):
-            st.write(f"En-cours Visitage : **{en_cours_visitage:.1f} km²**")
-        else:
-            st.write("En-cours Visitage : N/A")
-
+    # Colonne 1 : PIC réalisé
+    col1.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} km²")
 
     # Colonne 2 : PIC prévu
     col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} km²")
@@ -364,6 +357,15 @@ def show_dashboard_pic():
         "Taux d'adhérence S-1",
         f"{adherence_s1:.1f}%" if pd.notna(adherence_s1) else "N/A"
     )
+
+    # Colonne 5 : En-cours Visitage (Q4)
+    if (en_cours_visitage is not None) and (not pd.isna(en_cours_visitage)):
+        valeur_visitage = f"{en_cours_visitage:.1f} km²"
+    else:
+        valeur_visitage = "N/A"
+
+    col5.metric("En-cours Visitage", valeur_visitage)
+
 
     # Graphiques côte à côte
     campagne_labels = df.iloc[1, 6:14].tolist()
