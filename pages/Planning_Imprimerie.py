@@ -5,6 +5,6 @@ def show_planning_imprimerie():
     st.write("Page en cours de construction...")
 
     st.write("")
-
+    
     if st.button("⬅️ Retour au menu principal"):
         st.session_state["page"] = "menu"
