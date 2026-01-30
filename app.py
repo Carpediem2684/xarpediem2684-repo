@@ -82,7 +82,7 @@ if page == "home":
 
     # --- TITRE ---
     st.markdown("<div class='big-title'>Planification – Tetart.Y</div>", unsafe_allow_html=True)
-    st.markdown("<div class='subtitle'>Optimisation 4M – 3M – Production PVC</div>", unsafe_allow_html=True)
+    st.markdown("<div class='subtitle'>Optimisation 4M –  Production </div>", unsafe_allow_html=True)
 
     # --- CONTENEUR CENTRAL ---
     with st.container():
