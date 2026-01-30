@@ -8,7 +8,13 @@ from openpyxl import load_workbook
 
 
 def show_dashboard_pic():
-    st.error("🔥 DEBUG : CECI EST LE Dashboard_PIC.py QUE TU VIENS DE MODIFIER 🔥")
+    
+    st.title("🔥 DASHBOARD_PIC : VERSION DEBUG 🔥")
+    st.write("Si tu vois ce message, c'est BIEN ce fichier-là qui tourne sur Streamlit Cloud.")
+
+    if st.button("⬅️ Retour Menu"):
+        st.session_state["page"] = "menu"
+
     # === Bouton retour menu ===
     st.markdown("""
         <style>
