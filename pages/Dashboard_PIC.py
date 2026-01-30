@@ -37,6 +37,28 @@ def show_dashboard_pic():
     # Chargement des données
     file_path = 'Essai appli dashboard (1).xlsx'
     df = pd.read_excel(file_path, sheet_name='2025', engine='openpyxl', header=None)
+    
+    # === En-cours Visitage : lecture directe de la cellule Q4 via openpyxl ===
+    try:
+        wb_vis = load_workbook(file_path, data_only=True)
+        ws_vis = wb_vis["2025"]  # même feuille que le reste
+
+        # Lecture brute de Q4
+        val_q4 = ws_vis["Q4"].value
+
+        # Nettoyage : on enlève les éventuels "km²", espaces, virgule, etc.
+        if val_q4 is None:
+            en_cours_visitage = None
+        else:
+            val_str = str(val_q4).replace("km²", "").replace("km2", "").replace(" ", "").replace(",", ".")
+            en_cours_visitage = pd.to_numeric(val_str, errors="coerce")
+
+    except Exception as e:
+        en_cours_visitage = None
+        st.warning(f"Impossible de lire l'en-cours visitage (Q4). Détail : {e}")
+    
+    
+    
     # === Soucis de cylindre via openpyxl : lecture robuste d'AJ à AM ===
     try:
         wb = load_workbook(file_path, data_only=True)
@@ -134,12 +156,6 @@ def show_dashboard_pic():
     )
     ruptures = int(df.iloc[1, 16])
     
-    # En-cours Visitage : cellule Q4
-    en_cours_visitage = pd.to_numeric(df.iloc[3, 16], errors="coerce")
-    
-    # DEBUG TEMPORAIRE
-    st.write("DEBUG – Q4 brut :", df.iloc[3, 16])
-    st.write("DEBUG – En-cours Visitage (numérique) :", en_cours_visitage)
 
 
     # Taux d'adhérence global (W2)
@@ -323,16 +339,19 @@ def show_dashboard_pic():
     - **Objectif journalier moyen** : {objectif_journalier:.1f} km²  
     """)
 
+    
     # Affichage des métriques
     col1, col2, col3, col4 = st.columns(4)
 
     # Colonne 1 : PIC + En-cours Visitage
     with col1:
         st.metric("PIC Réalisé", f"{pic_realise[mois_selectionne]} km²")
-        if pd.notna(en_cours_visitage):
+
+        if (en_cours_visitage is not None) and (not pd.isna(en_cours_visitage)):
             st.write(f"En-cours Visitage : **{en_cours_visitage:.1f} km²**")
         else:
             st.write("En-cours Visitage : N/A")
+
 
     # Colonne 2 : PIC prévu
     col2.metric("PIC Prévu", f"{pic_prevu[mois_selectionne]} km²")
