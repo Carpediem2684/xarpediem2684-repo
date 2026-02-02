@@ -8,7 +8,7 @@ from openpyxl import load_workbook
 
 
 def show_dashboard_pic():
-    st.write("📌 DEBUG : Ce code s'exécute bien depuis dashboard_PIC.py")
+    
     # === Bouton retour menu ===
     st.markdown("""
         <style>
